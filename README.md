@@ -1308,21 +1308,12 @@ I structured the project in two distinct phases, learning from each:
 
 ## 👨‍💻 About the Developer
 
-**Joshua Peter Polaprayil**  
-AI Engineer | LLM Systems Architect
-
-I specialize in production-grade conversational AI systems, with expertise in:
-- Agentic workflows (LangGraph, AutoGPT)
-- Hybrid RAG systems (BM25 + vector + reranking)
-- Multi-channel bot development (Telegram, WhatsApp, web)
-- Identity-aware authentication systems
-- Production deployment (Docker, CI/CD, observability)
+**Joshua Peter Polaprayil** Full Stack AI Engineer
 
 **Connect:**
-- LinkedIn: [linkedin.com/in/joshua-peter-polaprayil](https://linkedin.com/in/joshua-peter-polaprayil)
-- Email: josh19peter96@gmail.com
-- GitHub: [github.com/josh19peter96](https://github.com/josh19peter96)
-
+- **LinkedIn:** [linkedin.com/in/josh33-peter10](https://www.linkedin.com/in/josh33-peter10/)
+- **Email:** [josh19peter96@gmail.com](mailto:josh19peter96@gmail.com)
+- **GitHub:** [github.com/JoshPola96](https://github.com/JoshPola96)
 ---
 
 ## 🙏 Acknowledgments & Project Ownership
@@ -1399,8 +1390,8 @@ The actual codebase remains proprietary to EsimTime Inc.
 
 Feel free to reach out if you have questions about the architecture, technical decisions, or want to discuss similar projects!
 
-**Email**: josh19peter96@gmail.com  
-**LinkedIn**: [Joshua Peter Polaprayil](https://linkedin.com/in/joshua-peter-polaprayil)
+**LinkedIn:** [linkedin.com/in/josh33-peter10](https://www.linkedin.com/in/josh33-peter10/)
+**Email:** [josh19peter96@gmail.com](mailto:josh19peter96@gmail.com)
 
 ---
 
