@@ -1390,8 +1390,8 @@ The actual codebase remains proprietary to EsimTime Inc.
 
 Feel free to reach out if you have questions about the architecture, technical decisions, or want to discuss similar projects!
 
-**LinkedIn:** [linkedin.com/in/josh33-peter10](https://www.linkedin.com/in/josh33-peter10/)
-**Email:** [josh19peter96@gmail.com](mailto:josh19peter96@gmail.com)
+- **LinkedIn:** [linkedin.com/in/josh33-peter10](https://www.linkedin.com/in/josh33-peter10/)
+- **Email:** [josh19peter96@gmail.com](mailto:josh19peter96@gmail.com)
 
 ---
 
