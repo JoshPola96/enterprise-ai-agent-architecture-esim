@@ -44,7 +44,7 @@
 
 ## 🎯 Project Genesis & Partnership
 
-**Business Vision**: Herman Güler (CEO, [EsimTime](https://esimtime.com)) identified an opportunity to revolutionize eSIM customer service using autonomous AI agents—eliminating 24/7 human support costs while improving response quality and speed.
+**Business Vision**: Herman Polat (CEO, [EsimTime](https://esimtime.com)) identified an opportunity to revolutionize eSIM customer service using autonomous AI agents—eliminating 24/7 human support costs while improving response quality and speed.
 
 **Technical Execution**: I was engaged as AI Engineer & DevOps Architect to transform this vision into a production-ready system capable of handling the complete customer lifecycle across multiple messaging platforms.
 
@@ -59,9 +59,9 @@
 
 ## 🎯 Project Context & Collaboration
 
-### The Vision (Herman Güler, EsimTime CEO)
+### The Vision (Herman Polat, EsimTime CEO)
 
-**Herman Güler**, founder and CEO of **[EsimTime](https://esimtime.com)**, envisioned an autonomous AI agent that could handle the complete customer journey - from discovering travel data plans to purchase to troubleshooting - across multiple messaging platforms, 24/7, without human support staff.
+**Herman Polat**, founder and CEO of **[EsimTime](https://esimtime.com)**, envisioned an autonomous AI agent that could handle the complete customer journey - from discovering travel data plans to purchase to troubleshooting - across multiple messaging platforms, 24/7, without human support staff.
 
 This was **Herman's business innovation** - recognizing that AI could transform customer service in the eSIM industry while dramatically reducing operational costs.
 
@@ -82,7 +82,7 @@ This project exemplifies successful collaboration:
 - **My Contribution**: Technical architecture, implementation skills, technology selection, and engineering execution
 - **EsimTime Team**: Backend API support and integration assistance
 
-**Credit**: The **idea** and **business vision** belong to Herman Güler and EsimTime. The **technical architecture** and **implementation** represent my engineering work. This case study showcases the **learnings and patterns** I developed during this collaboration.
+**Credit**: The **idea** and **business vision** belong to Herman Polat and EsimTime. The **technical architecture** and **implementation** represent my engineering work. This case study showcases the **learnings and patterns** I developed during this collaboration.
 
 ---
 
@@ -1320,7 +1320,7 @@ I structured the project in two distinct phases, learning from each:
 
 ### Business Ownership & Vision
 
-This project was **conceived and commissioned by Herman Güler**, CEO of **[EsimTime](https://esimtime.com)**.
+This project was **conceived and commissioned by Herman Polat**, CEO of **[EsimTime](https://esimtime.com)**.
 
 **Herman's contribution was fundamental:**
 - Original business concept: Using AI to automate eSIM customer service
@@ -1349,7 +1349,7 @@ This project demonstrates what's possible when business vision meets technical e
 ### Deep Gratitude
 
 **Special Thanks:**
-- **Herman Güler** (EsimTime CEO) - For the opportunity, trust, and collaborative partnership throughout this journey
+- **Herman Polat** (EsimTime CEO) - For the opportunity, trust, and collaborative partnership throughout this journey
 - **EsimTime Engineering Team** - Backend API integration and technical support
 - **Google AI** - Gemini Flash 2.0 API access
 - **LangChain & Qdrant Teams** - Excellent open-source tools and documentation
