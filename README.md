@@ -17,14 +17,16 @@
 
 **What This Is**: A comprehensive technical portfolio piece documenting a production-grade conversational AI platform I architected, implemented, and deployed for the global eSIM industry.
 
-**Project Scope** (July - December 2024):
+**Project Scope** (July 2024 – March 2026):
 - ✅ **AI Architecture**: Agentic workflows, hybrid RAG, multi-channel authentication
 - ✅ **Full-Stack Development**: FastAPI backend, PostgreSQL, Redis, Qdrant vector DB
+- ✅ **Commerce Integration**: In-chat payment processing, eSIM provisioning, free trial flows
+- ✅ **Proactive Engagement**: Backend-initiated notifications via Redis Streams pipeline
 - ✅ **DevOps & Infrastructure**: Docker orchestration, Nginx reverse proxy, SSL/TLS
 - ✅ **Security Hardening**: Firewall rules, fail2ban, rate limiting, input validation
 - ✅ **CI/CD Pipeline**: GitHub Actions with dev→main→prod workflow, automated testing
 - ✅ **Database Engineering**: Schema design, Alembic migrations, connection pooling
-- ✅ **Production Operations**: Server provisioning, DNS configuration, monitoring, backups
+- ✅ **Production Operations**: Server provisioning, DNS configuration, monitoring, automated backups
 
 **What's Included Here**:
 - ✅ System architecture and design decisions
@@ -54,6 +56,8 @@
 - **Shared Success**: A system that autonomously handles thousands of customer interactions with sub-5s response times
 
 **Result**: A production platform that replaced the need for human support agents while maintaining high customer satisfaction—demonstrating the commercial viability of agentic AI in customer service.
+
+**External Validation**: In early 2026, EsimTime presented at an investor demo day with the AI platform as a core differentiator. The result: **top 5 out of 39 competing startups**. The architecture decisions—lean infrastructure, full lifecycle automation, proactive engagement—were validated as directionally correct from both a technical and business standpoint.
 
 ---
 
@@ -143,8 +147,9 @@ Implemented multi-tier memory architecture balancing speed, persistence, and sem
 
 | Phase | Timeline | Key Characteristics |
 | :--- | :--- | :--- |
-| **Phase 1: Multi-Agent Exploration** | Jul-Sep 2024 | • Experimented with specialized agent coordination<br>• Validated agentic workflows for complex conversations<br>• **Bottleneck:** High latency in agent handoffs<br>• **Challenge:** Context window management |
-| **Phase 2: Simplified Production** | Oct-Dec 2024 | • Consolidated to **Single-Agent** with specialized capabilities<br>• Migrated to **Gemini Flash 2.0** (1M tokens)<br>• Implemented persistent **Qdrant** storage<br>• **Result:** Achieved 60% latency reduction |
+| **Phase 1: Multi-Agent Exploration** | Jul–Sep 2024 | • Experimented with specialized agent coordination<br>• Validated agentic workflows for complex conversations<br>• **Bottleneck:** High latency in agent handoffs<br>• **Challenge:** Context window management |
+| **Phase 2: Simplified Production** | Oct–Dec 2024 | • Consolidated to **Single-Agent** with specialized capabilities<br>• Migrated to **Gemini Flash 2.0** (1M tokens)<br>• Implemented persistent **Qdrant** storage<br>• **Result:** Achieved 60% latency reduction |
+| **Phase 3: Complete Commerce & Proactive Engagement** | Jan–Mar 2026 | • In-chat payment processing (card checkout + wallet balance)<br>• Instant eSIM provisioning with activation code surfacing<br>• Free trial claiming with async provisioning handling<br>• **Proactive notifications**: backend-initiated events via Redis Streams<br>• Exactly-once delivery, retry logic, dead-letter queue, pending store<br>• Automated backup system integrated into deployment lifecycle |
 
 **Lesson**: Architectural simplicity often outperforms complexity in production environments
 
@@ -202,6 +207,42 @@ Implemented multi-tier memory architecture balancing speed, persistence, and sem
 - Leader election for singleton tasks
 - State synchronization across workers
 - Horizontal scaling readiness
+
+#### 6. **Complete Commerce Lifecycle** (Phase 3)
+
+The agent now handles the full purchase journey in-chat, eliminating redirect friction:
+
+**Payment Routing**:
+- Card payments: generates a Stripe checkout session, returns the URL to the user, verifies completion on confirmation
+- Wallet payments: instant purchase — activation code surfaces in the same response, installation guidance begins immediately
+- Free trial claiming: single-tool operation with async provisioning handling (never fabricates activation codes during generation)
+
+**Post-Purchase Flow**:
+- Activation codes retrieved automatically from the eSIM inventory tool
+- Installation guidance begins in the same agent turn as purchase confirmation
+- Proactive checkout summary required before any purchase executes (user always confirms first)
+
+**Impact**: Eliminated the need for a separate web purchase flow for the majority of transactions
+
+#### 7. **Proactive Notification System** (Phase 3)
+
+The platform can now initiate conversations on behalf of the backend — without the user sending a message first.
+
+**Architecture Pattern**:
+- Backend sends a structured event to a dedicated webhook endpoint
+- Event is enqueued to a Redis Streams consumer group with idempotency deduplication
+- One `NotificationConsumer` per worker processes messages with exactly-once delivery guarantees
+- The same agent pipeline (identity, session, tool calling, broadcast) handles proactive messages identically to user-initiated ones
+
+**Reliability Guarantees**:
+- Retry logic (configurable attempts) with re-enqueue on transient failures
+- Dead-letter queue for messages that exhaust retries
+- Pending store for users who haven't yet messaged the bot — notifications are held and delivered automatically once the user makes contact (within a configurable TTL window)
+- Stale message reclaim on worker restart (no messages lost to crashes)
+
+**Event Types Supported**: payment confirmation with activation code surfacing, eSIM activation, plan expiry warnings, data low alerts, payment failure recovery, and free-form backend messages
+
+**Impact**: Transforms the platform from reactive (user asks → agent answers) to proactive (backend event → agent initiates)
 
 ---
 
@@ -528,8 +569,12 @@ Core capabilities:
 - `./manage.sh down`: Graceful shutdown (preserves data)
 - `./manage.sh down-all`: Complete teardown (deletes volumes)
 - `./manage.sh logs [service]`: Tail logs with color output
+- `./manage.sh db`: Open PostgreSQL shell inside the running container
 - `./manage.sh test-setup`: Start test dependencies
 - `./manage.sh test-run pytest`: Execute integration tests
+- `./manage.sh backup [--dry-run]`: Run full backup (PostgreSQL + Qdrant)
+- `./manage.sh backup-list`: List all available backup files with sizes
+- `./manage.sh restore [list|postgres|qdrant] ...`: Restore from backup
 
 Intelligent features:
 - Auto-detects environment (`.env.local` vs `.env.production`)
@@ -650,11 +695,13 @@ Steps:
 - Pool recycle: 3600s (prevents stale connections)
 - Connection timeout: 30s
 
-**Backup Strategy** (production):
-- Daily PostgreSQL dumps: `pg_dump` → compressed `.sql.gz`
-- Weekly Qdrant snapshots: Vector collection exports
-- Retention: 7 daily, 4 weekly, 3 monthly
-- Offsite backup: Encrypted upload to cloud storage
+**Backup Strategy** (production — automated):
+- **Script-based system**: `scripts/backup/` provides four scripts covering backup, restore, cron installation, and cron removal
+- **PostgreSQL**: `pg_dump` compressed custom format (`.dump`) — supports selective table restore
+- **Qdrant**: REST snapshot API creates a snapshot, `docker cp` extracts it from the container
+- **Cron automation**: `manage.sh start` (production) automatically installs a daily cron job; `manage.sh down` removes it
+- **Retention**: Configurable via `RETAIN_DAYS` (default: 7 days), with automatic cleanup of old files
+- **Safety**: All restore operations require explicit confirmation before executing destructive changes
 
 ### Monitoring & Observability
 
@@ -983,6 +1030,17 @@ The system was validated against comprehensive real-world usage patterns represe
 - Production deployment and monitoring setup
 - **Milestone**: System live, handling real customer interactions
 
+### January–March 2026: Phase 3 — Complete Commerce & Proactive Engagement
+- In-chat payment processing: card checkout via Stripe + instant wallet balance payments
+- Free trial provisioning with async eSIM generation handling
+- Activation code (LPA) surfaced automatically post-purchase; installation guidance begins in the same agent turn
+- Backend-initiated notification system: Redis Streams consumer with exactly-once delivery, retry logic, dead-letter queue, and pending store for unlinked users
+- Webhook endpoint for structured backend events (payment events, data alerts, plan expiry)
+- Automated database backup system (`scripts/backup/`) integrated into deployment lifecycle
+- Schema migrations: billing identity fields for payment processing
+- **External Validation**: Top 5 of 39 startups at investor demo day — AI platform highlighted as key differentiator
+- **Milestone**: Platform handles complete customer lifecycle autonomously, including proactive outreach
+
 ---
 
 ## 🎓 Key Learnings & Insights
@@ -1045,11 +1103,12 @@ The system was validated against comprehensive real-world usage patterns represe
 
 ## 🚀 Future Enhancement Opportunities
 
-### Phase 3: Complete eSIM Lifecycle
-- **Payment Integration**: Stripe/PayPal in-chat checkout
-- **Order Management**: Track order status, delivery notifications
-- **eSIM Auto-Provisioning**: Activate plans immediately after payment
-- **Post-Purchase Support**: Automated activation assistance
+### ✅ Phase 3: Complete eSIM Lifecycle (Shipped — Q1 2026)
+- **Payment Processing**: In-chat Stripe checkout (card) and instant wallet balance payments — no separate web flow required
+- **eSIM Provisioning**: Plans activated immediately after payment; LPA activation code surfaced in the same agent response
+- **Free Trial Claiming**: Single-tool operation with graceful async provisioning and already-claimed recovery
+- **Proactive Notifications**: Backend-initiated events delivered through the full agent pipeline — payment confirmations, data alerts, plan expiry warnings, and more
+- **Automated Backups**: Daily PostgreSQL + Qdrant backups with cron automation integrated into the deployment lifecycle
 
 ### Phase 4: Advanced Analytics
 - **Conversation Analytics**: Intent classification, drop-off analysis
@@ -1066,59 +1125,6 @@ The system was validated against comprehensive real-world usage patterns represe
 - **White-Label Platform**: Rebrand for other eSIM providers
 - **API Marketplace**: Expose agent capabilities as API
 - **Self-Service Onboarding**: Automated tenant provisioning
-
----
-
-
-1. **Remember context** across multiple conversations (not just within a single chat)
-2. **Access accurate information** from knowledge bases and live APIs
-3. **Handle authentication** seamlessly without breaking conversation flow
-4. **Never hallucinate** prices, product IDs, or specifications
-5. **Respond quickly** (under 5 seconds) even with complex multi-step requests
-6. **Scale reliably** to handle multiple concurrent users
-
-### My Approach: A Two-Phase Evolution
-
-I structured the project in two distinct phases, learning from each:
-
-#### **Phase 1: Research & Validation** (July - September 2024)
-
-**Goal**: Validate that autonomous agentic workflows could handle the business requirements
-
-**Approach Taken**:
-- Explored multi-agent architectures with specialized roles
-- Used locally-hosted open-source LLMs for cost control during R&D
-- Implemented in-memory vector storage for rapid prototyping
-- Built proof-of-concept with basic session management
-
-**Key Learnings**:
-- ✅ Validated that agent workflows can handle complex multi-turn conversations
-- ✅ Confirmed RAG (Retrieval-Augmented Generation) reduces hallucinations
-- ⚠️ Discovered latency issues with multiple agent coordination
-- ⚠️ Found context window limitations with smaller models
-- ⚠️ Learned that local model performance varies significantly
-
-**Outcome**: Successfully proved the concept, but identified architectural improvements needed for production.
-
-#### **Phase 2: Production Engineering** (October - December 2024)
-
-**Goal**: Build a production-ready system that's fast, reliable, and maintainable
-
-**Approach Taken**:
-- Migrated to a single-agent architecture with specialized tool calling
-- Adopted cloud-based LLM with massive context window (1M tokens)
-- Implemented persistent vector storage with proper indexing
-- Built comprehensive authentication and session management
-- Created automated deployment and testing pipelines
-
-**Key Learnings**:
-- ✅ Single-agent with tools is simpler and faster than multi-agent coordination
-- ✅ Large context windows eliminate complex memory management
-- ✅ Proper state management is critical for authentication flows
-- ✅ LLM-based testing is more effective than hardcoded assertions for generative outputs
-- ✅ Circuit breakers and graceful degradation are essential for production
-
-**Outcome**: Achieved 60% faster response times, >99% tool accuracy, and production-grade reliability.
 
 ---
 
@@ -1395,8 +1401,8 @@ Feel free to reach out if you have questions about the architecture, technical d
 
 ---
 
-**Last Updated**: December 27, 2024  
-**Status**: ✅ Production-Ready Architecture (Deployed July-December 2024)
+**Last Updated**: March 2026  
+**Status**: ✅ Production Architecture — Active (July 2024 – March 2026)
 
 ---
 
