@@ -166,7 +166,7 @@ Implemented multi-tier memory architecture balancing speed, persistence, and sem
 | Phase | Timeline | Key Characteristics |
 | :--- | :--- | :--- |
 | **Phase 1: Multi-Agent Exploration** | Jul–Sep 2025 | • Experimented with specialized agent coordination<br>• Validated agentic workflows for complex conversations<br>• **Bottleneck:** High latency in agent handoffs<br>• **Challenge:** Context window management |
-| **Phase 2: Simplified Production** | Oct–Dec 2024 | • Consolidated to **Single-Agent** with specialized capabilities<br>• Migrated to **Gemini Flash 2.0** (1M tokens)<br>• Implemented persistent **Qdrant** storage<br>• **Result:** Achieved 60% latency reduction |
+| **Phase 2: Simplified Production** | Oct–Dec 2025 | • Consolidated to **Single-Agent** with specialized capabilities<br>• Migrated to **Gemini Flash 2.0** (1M tokens)<br>• Implemented persistent **Qdrant** storage<br>• **Result:** Achieved 60% latency reduction |
 | **Phase 3: Complete Commerce & Proactive Engagement** | Jan–Mar 2026 | • In-chat payment processing (card checkout + wallet balance)<br>• Instant eSIM provisioning with activation code surfacing<br>• Free trial claiming with async provisioning handling<br>• **Proactive notifications**: backend-initiated events via Redis Streams<br>• Exactly-once delivery, retry logic, dead-letter queue, pending store<br>• Automated backup system integrated into deployment lifecycle |
 
 **Lesson**: Architectural simplicity often outperforms complexity in production environments
@@ -1500,7 +1500,7 @@ Feel free to reach out if you have questions about the architecture, technical d
 ---
 
 **Last Updated**: April 2026
-**Status**: ✅ Production Architecture — Active (July 2024 – March 2026)
+**Status**: ✅ Production Architecture — Active (July 2025 – March 2026)
 
 ---
 
