@@ -5,6 +5,30 @@
   <em>Full-stack implementation: AI • DevOps • Infrastructure • Security</em>
 </p>
 
+---
+
+## 📖 Table of Contents
+
+- [Repository Overview](#-repository-overview)
+- [Project Genesis & Collaboration](#-project-genesis--partnership)
+- [Technical Highlights & Innovations](#-technical-highlights--innovations)
+- [Agent Capabilities & Persona](#-agent-capabilities--persona)
+- [System Architecture](#-system-architecture)
+- [Technology Stack](#-technology-stack)
+- [Infrastructure & DevOps](#-infrastructure--devops)
+- [Conversational Intelligence Design](#-conversational-intelligence-design)
+- [Performance Metrics & Benchmarks](#-performance-metrics--benchmarks)
+- [Quality Assurance & Validation](#-quality-assurance--validation)
+- [Project Evolution Timeline](#-project-evolution-timeline)
+- [Key Learnings & Insights](#-key-learnings--insights)
+- [Future Enhancement Opportunities](#-future-enhancement-opportunities)
+- [Key Technical Patterns Explored](#-key-technical-patterns-explored)
+- [Technical References & Inspirations](#-technical-references--inspirations)
+- [About the Developer](#-about-the-developer)
+- [Acknowledgments & Project Ownership](#-acknowledgments--project-ownership)
+
+---
+
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.119.0-009688.svg)](https://fastapi.tiangolo.com)
 [![LangGraph](https://img.shields.io/badge/LangGraph-0.6.10-blueviolet.svg)](https://langchain-ai.github.io/langgraph/)
@@ -17,7 +41,7 @@
 
 **What This Is**: A comprehensive technical portfolio piece documenting a production-grade conversational AI platform I architected, implemented, and deployed for the global eSIM industry.
 
-**Project Scope** (July 2024 – March 2026):
+**Project Scope** (July 2025 – March 2026):
 - ✅ **AI Architecture**: Agentic workflows, hybrid RAG, multi-channel authentication
 - ✅ **Full-Stack Development**: FastAPI backend, PostgreSQL, Redis, Qdrant vector DB
 - ✅ **Commerce Integration**: In-chat payment processing, eSIM provisioning, free trial flows
@@ -57,21 +81,11 @@
 
 **Result**: A production platform that replaced the need for human support agents while maintaining high customer satisfaction—demonstrating the commercial viability of agentic AI in customer service.
 
-**External Validation**: In early 2026, EsimTime presented at an investor demo day with the AI platform as a core differentiator. The result: **top 5 out of 39 competing startups**. The architecture decisions—lean infrastructure, full lifecycle automation, proactive engagement—were validated as directionally correct from both a technical and business standpoint.
-
----
-
-## 🎯 Project Context & Collaboration
-
-### The Vision (Herman Polat, EsimTime CEO)
-
-**Herman Polat**, founder and CEO of **[EsimTime](https://esimtime.com)**, envisioned an autonomous AI agent that could handle the complete customer journey - from discovering travel data plans to purchase to troubleshooting - across multiple messaging platforms, 24/7, without human support staff.
-
-This was **Herman's business innovation** - recognizing that AI could transform customer service in the eSIM industry while dramatically reducing operational costs.
+**External Validation**: In early 2026, EsimTime presented at an investor demo day with the AI platform as a core differentiator — finishing **top 5 out of 39 competing startups**. The architecture decisions (lean infrastructure, full lifecycle automation, proactive engagement) were validated as directionally correct from both a technical and business standpoint.
 
 ### My Role (AI Engineer & Technical Architect)
 
-I was brought on to transform Herman's vision into technical reality. My responsibilities included:
+I was brought on to transform this vision into technical reality. Responsibilities included:
 
 - **Technology Research**: Evaluating LLM providers, vector databases, and agent frameworks
 - **Architecture Design**: Designing the multi-phase system evolution from research to production
@@ -79,14 +93,7 @@ I was brought on to transform Herman's vision into technical reality. My respons
 - **Production Hardening**: Implementing authentication, error handling, and deployment automation
 - **Testing & Validation**: Creating comprehensive test suites and evaluation frameworks
 
-### A True Partnership
-
-This project exemplifies successful collaboration:
-- **Herman's Contribution**: Business vision, product requirements, domain expertise, and entrepreneurial leadership
-- **My Contribution**: Technical architecture, implementation skills, technology selection, and engineering execution
-- **EsimTime Team**: Backend API support and integration assistance
-
-**Credit**: The **idea** and **business vision** belong to Herman Polat and EsimTime. The **technical architecture** and **implementation** represent my engineering work. This case study showcases the **learnings and patterns** I developed during this collaboration.
+**Credit note**: The business vision and product requirements belong to Herman Polat and EsimTime. The technical architecture and implementation represent my engineering work. This case study showcases the learnings and patterns developed during this collaboration.
 
 ---
 
@@ -111,6 +118,17 @@ This project exemplifies successful collaboration:
 - Graceful degradation (continues with cached data on failures)
 - Multi-layer error recovery and retry logic
 - Health monitoring with degraded status detection
+
+### Why This Architecture Stands Out
+
+| **Challenge** | **Common Approach** | **This System** |
+|---|---|---|
+| Multi-turn context | Truncate history | 1M token window — full history always available |
+| Cross-platform identity | Separate user stores | Unified UUID with automatic channel linking |
+| Auth mid-conversation | Drop the user's intent | Pending intents stored and auto-executed post-login |
+| LLM hallucinating tools | Hope it doesn't | 5-layer validation + whitelist + loop budget |
+| Proactive notifications | Separate notification service | Same agent pipeline, zero duplication |
+| Production cost | $300+/month cloud services | Startup Scale |
 
 ### AI Architecture Innovations
 
@@ -147,7 +165,7 @@ Implemented multi-tier memory architecture balancing speed, persistence, and sem
 
 | Phase | Timeline | Key Characteristics |
 | :--- | :--- | :--- |
-| **Phase 1: Multi-Agent Exploration** | Jul–Sep 2024 | • Experimented with specialized agent coordination<br>• Validated agentic workflows for complex conversations<br>• **Bottleneck:** High latency in agent handoffs<br>• **Challenge:** Context window management |
+| **Phase 1: Multi-Agent Exploration** | Jul–Sep 2025 | • Experimented with specialized agent coordination<br>• Validated agentic workflows for complex conversations<br>• **Bottleneck:** High latency in agent handoffs<br>• **Challenge:** Context window management |
 | **Phase 2: Simplified Production** | Oct–Dec 2024 | • Consolidated to **Single-Agent** with specialized capabilities<br>• Migrated to **Gemini Flash 2.0** (1M tokens)<br>• Implemented persistent **Qdrant** storage<br>• **Result:** Achieved 60% latency reduction |
 | **Phase 3: Complete Commerce & Proactive Engagement** | Jan–Mar 2026 | • In-chat payment processing (card checkout + wallet balance)<br>• Instant eSIM provisioning with activation code surfacing<br>• Free trial claiming with async provisioning handling<br>• **Proactive notifications**: backend-initiated events via Redis Streams<br>• Exactly-once delivery, retry logic, dead-letter queue, pending store<br>• Automated backup system integrated into deployment lifecycle |
 
@@ -274,29 +292,53 @@ The agent operates as an **expert travel connectivity consultant**—combining p
 
 ### Intelligent Behaviors
 
-**Multilingual Intelligence**
+#### Multilingual Intelligence
+
 - Auto-detects user language from first message
 - Maintains language consistency across conversation turns
 - Persists language preference across sessions and platforms
 - Handles code-switching naturally (e.g., English/Spanish mix)
 
-**Cross-Platform Optimized**
+#### Cross-Platform Optimized
+
 - Formats responses appropriately for Telegram vs. WhatsApp
 - Uses platform-appropriate emoji and markdown syntax
 - Adapts message length to platform constraints
 - Maintains conversation continuity across platform switches
 
-**Context-Aware Personalization**
+#### Context-Aware Personalization
+
 - Remembers user preferences and past interactions
 - Adapts tone based on conversation stage (exploration vs. troubleshooting)
 - Recognizes returning users and adjusts onboarding
 - Balances friendliness with efficiency based on user urgency
 
-**Proactive Guidance**
+#### Proactive Guidance
+
 - Asks clarifying questions before making recommendations
 - Suggests complementary products or better-value alternatives
 - Anticipates common follow-up questions
 - Provides unsolicited but relevant information (e.g., "This plan includes 50 countries")
+- Proactively checks account balance and existing eSIMs at purchase intent signal — before the user asks
+- Silently validates coupons and surfaces the best available discount before checkout
+
+#### Post-Purchase Proactivity (Phase 3)
+
+- After payment confirmation, immediately retrieves and presents the LPA activation code
+- Begins installation guidance in the same response turn — no separate step needed
+- Backend can also push payment events via webhook; agent initiates the conversation proactively
+
+#### Session Intelligence
+
+- **Returning user recognition** across platform switches (Telegram ↔ WhatsApp) via unified internal UUID
+- **90-day rolling inactivity timeout** — frequent users stay authenticated indefinitely; a user inactive for 90+ days must re-authenticate
+- **Two-clock expiry model:** the 90-day inactivity window and the JWT access token expiry are tracked separately — the session cannot outlive a revoked token, whichever expires first takes precedence
+- **Graceful mid-conversation expiry:** when a session expires mid-conversation (401), the original intent is preserved as a pending task and surfaced in the re-authentication prompt
+- **Debounce cache:** a 60-second in-process session check cache prevents redundant database hits during multi-tool turns where session state is checked multiple times in rapid succession
+- **Three session states:**
+  - `is_active=False`, `login_id SET` → Pending login (OTP sent, not yet verified)
+  - `is_active=False`, `login_id NULL` → Logged out
+  - `is_active=True` → Fully authenticated
 
 ### Conversational Excellence
 
@@ -577,15 +619,28 @@ Core capabilities:
 - `./manage.sh restore [list|postgres|qdrant] ...`: Restore from backup
 
 Intelligent features:
+
 - Auto-detects environment (`.env.local` vs `.env.production`)
-- GPU support: Adds `docker-compose.gpu.yml` if NVIDIA GPU present
-- Distributed locking: Only first worker sets Telegram webhook (prevents race)
-- Ngrok integration (dev mode):
-  - Starts tunnel
-  - Waits for public URL (15 retries, 2s interval)
-  - Updates `.env.local` dynamically
-  - Configures webhook automatically
-- Pre-flight validation: Checks Docker, Docker Compose, `jq` availability
+- GPU support: Adds `docker-compose.gpu.yml` if NVIDIA GPU is present
+- Distributed locking: Only the first worker sets the Telegram webhook — prevents race conditions in multi-worker startup
+- Ngrok integration (dev mode): Starts tunnel, waits for public URL (15 retries, 2s interval), updates `.env.local` dynamically, configures webhook automatically
+- Pre-flight validation: Checks Docker, Docker Compose, and `jq` availability before starting
+- Backup lifecycle integration (production): `start` automatically installs the daily cron job; `down` and `down-all` automatically remove it
+
+### Message Delivery Architecture
+
+The `BroadcastManager` handles all outbound delivery with platform-aware logic:
+
+| **Platform** | **Character Limit** | **URL Delivery** | **Chunk Delay** |
+|---|---|---|---|
+| **Telegram** | 3,800 chars | Inline keyboard button | 200ms between chunks |
+| **WhatsApp** | 1,400 chars | Plain text appended to final chunk | 500ms between chunks |
+
+**Smart splitting:** `MarkdownSplitter` preserves context — never cuts mid-sentence, mid-list, or mid-code-block. Text normalization converts escaped `\n` sequences to real newlines and collapses excessive whitespace before splitting.
+
+**Rate limiting:** 15 messages per minute per chat, enforced at the distributed Redis layer. Exceeding this triggers an immediate "slow down" user message instead of queuing — preventing resource exhaustion.
+
+**WhatsApp signature validation:** The Twilio webhook handler reconstructs the original URL using `x-forwarded-proto` and `x-forwarded-host` proxy headers before HMAC validation — required for correct behavior behind Nginx. Without this, all signatures would fail.
 
 ### Security Hardening
 
@@ -786,6 +841,11 @@ The agent employs sophisticated prompt engineering to achieve human-like convers
 - Provides multiple interpretations when intent is unclear
 - Gracefully handles malformed inputs or unexpected responses
 - Never shows technical errors to users (user-friendly messages only)
+
+**Security-Conscious Design**
+- Forgot password flow always returns success regardless of email existence — prevents user enumeration attacks
+- Rate limiting enforced at the message level (per-chat) and API level (per-IP) simultaneously
+- Tokens sanitized from all log output — never written in plain text to structured logs
 
 **Intelligent Defaults**
 - Assumes most common use cases when details are missing
@@ -995,34 +1055,34 @@ The system was validated against comprehensive real-world usage patterns represe
 
 ## 📈 Project Evolution Timeline
 
-### July 2024: Inception & Research
-- Project officially commenced (contract signed 07/30/2024)
+### July 2025: Inception & Research
+- Project officially commenced (contract signed 07/30/2025)
 - Exploration of multi-agent architectures
 - Experimentation with locally-hosted LLMs (Ollama + LLaMA 3.1)
 - Initial RAG prototyping with ChromaDB
 
-### August-September 2024: Phase 1 (Multi-Agent Research)
+### August-September 2025: Phase 1 (Multi-Agent Research)
 - Implemented 3-agent system (Orchestrator, API Agent, RAG Agent)
 - Validated agentic workflows for complex conversations
 - Identified latency bottlenecks (8-12s response times)
 - Discovered context window limitations (128k insufficient)
 - **Milestone**: Successfully proved concept, planned production pivot
 
-### October 2024: Phase 2 Transition (Production Re-Architecture)
+### October 2025: Phase 2 Transition (Production Re-Architecture)
 - Migration to Gemini Flash 2.0 (1M token context)
 - Shift to single-agent + specialized tools pattern
 - Qdrant integration for persistent vector storage
 - Design of identity-aware authentication system
 - **Milestone**: Achieved 60% latency reduction (3-5s)
 
-### November 2024: Production Hardening
+### November 2025: Production Hardening
 - Docker containerization and multi-service orchestration
 - Multi-worker coordination with distributed locking
 - Circuit breakers and comprehensive error handling
 - Security hardening (firewall, fail2ban, rate limiting, input validation)
 - **Milestone**: Production-grade reliability achieved
 
-### December 2024: Full Automation & Deployment
+### December 2025: Full Automation & Deployment
 - Complete CI/CD pipeline implementation (GitHub Actions)
 - Automated deployment scripts (`manage.sh`)
 - Implementation of MemoAI-inspired hybrid memory system
@@ -1090,7 +1150,22 @@ The system was validated against comprehensive real-world usage patterns represe
 - User-friendly error messages (never show stack traces)
 - Background health checks for recovery detection
 
-### 6. DevOps is Part of the Product
+### 6. Security Through Architecture, Not Afterthought
+
+**Lesson**: Security decisions embedded into the architecture are stronger than bolt-on controls.
+
+Examples observed:
+
+- Anti-enumeration: Forgot password always returns success — prevents discovering valid accounts
+- Token sanitization: Tool arguments sanitized before logging — tokens never appear in log files even if log aggregation is compromised
+- Distributed locking: User creation and merge operations use distributed locks to prevent race conditions that could create duplicate accounts
+- Session vs. token expiry: Two separate expiry clocks prevent sessions outliving revoked tokens
+- Idempotency keys: Webhook delivery uses Redis SET NX to prevent double-processing on Stripe retries
+- **WhatsApp signature reconstruction:** Twilio HMAC validation requires the exact URL Twilio called. Behind an Nginx reverse proxy, the internal address is different from the public one. The handler reconstructs the correct URL from `x-forwarded-proto` and `x-forwarded-host` proxy headers before validating — without this, every WhatsApp webhook would fail signature checks. The fix is architectural (correct URL reconstruction at the framework layer), not bolt-on (disabling validation).
+
+Impact: No dedicated security audit phase required — most attack surfaces were closed during normal architecture design.
+
+### 7. DevOps is Part of the Product
 **Lesson**: Beautiful AI is worthless if it can't be deployed reliably.
 
 **Decision**: Invested heavily in infrastructure automation:
@@ -1101,7 +1176,7 @@ The system was validated against comprehensive real-world usage patterns represe
 
 ---
 
-## 🚀 Future Enhancement Opportunities
+## 🗺️ Future Enhancement Opportunities
 
 ### ✅ Phase 3: Complete eSIM Lifecycle (Shipped — Q1 2026)
 - **Payment Processing**: In-chat Stripe checkout (card) and instant wallet balance payments — no separate web flow required
@@ -1128,7 +1203,7 @@ The system was validated against comprehensive real-world usage patterns represe
 
 ---
 
-## 🧠 Key Technical Patterns Explored
+## 🔬 Key Technical Patterns Explored
 
 ### 1. Hybrid Memory Architecture (Inspired by MemoAI Research)
 
@@ -1251,6 +1326,29 @@ The system was validated against comprehensive real-world usage patterns represe
 **Health Monitoring**:
 - Regular health checks for all dependencies (database, cache, vector store, external APIs)
 - Report overall system status as: healthy | degraded | unhealthy
+
+### 6. Time-Ordered UUIDs (UUIDv7)
+
+**Pattern:** Use time-ordered identifiers instead of random UUIDs for database primary keys.
+
+**What I Built:**
+
+- Custom `uuid7()` implementation that encodes the millisecond Unix timestamp in the high 48 bits of the UUID
+- Applied to all primary key columns: `users`, `contact_channels`, `conversation_history`
+
+**Why This Matters:**
+
+Random UUIDv4 keys insert at arbitrary positions in a B-tree index, causing frequent page splits and index fragmentation. UUIDv7 keys are monotonically increasing — new rows always append to the right end of the index, eliminating fragmentation on high-write tables.
+
+**Impact:**
+
+- Faster `INSERT` operations on `conversation_history` (high-volume table)
+- Better PostgreSQL buffer cache utilization (recent records cluster together)
+- IDs sort by creation time naturally — useful for pagination and audit queries
+- No change to query interface (still standard UUID type)
+
+**Learning:** A small implementation detail (48 bits of timestamp vs. all random) eliminates a class of database performance problems entirely, with zero application-layer changes required.
+
 ---
 
 ## 📚 Technical References & Inspirations
@@ -1401,7 +1499,7 @@ Feel free to reach out if you have questions about the architecture, technical d
 
 ---
 
-**Last Updated**: March 2026  
+**Last Updated**: April 2026
 **Status**: ✅ Production Architecture — Active (July 2024 – March 2026)
 
 ---
