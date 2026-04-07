@@ -13,22 +13,22 @@
 
 ## 📖 Table of Contents
 
-- [Repository Overview](#repository-overview)
-- [Project Genesis & Partnership](#project-genesis--partnership)
-- [Technical Highlights & Innovations](#technical-highlights--innovations)
-- [Agent Capabilities & Persona](#agent-capabilities--persona)
-- [System Architecture](#system-architecture)
-- [Technology Stack](#technology-stack)
-- [Infrastructure & DevOps](#infrastructure--devops)
-- [Conversational Intelligence Design](#conversational-intelligence-design)
-- [Performance Metrics & Benchmarks](#performance-metrics--benchmarks)
-- [Quality Assurance & Validation](#quality-assurance--validation)
-- [Project Evolution Timeline](#project-evolution-timeline)
-- [Key Learnings & Insights](#key-learnings--insights)
-- [Future Enhancement Opportunities](#future-enhancement-opportunities)
-- [Key Technical Patterns Explored](#key-technical-patterns-explored)
-- [Technical References & Inspirations](#technical-references--inspirations)
-- [Let's Connect](#lets-connect)
+- [Repository Overview](#-repository-overview)
+- [Project Genesis & Partnership](#-project-genesis--partnership)
+- [Technical Highlights & Innovations](#-technical-highlights--innovations)
+- [Agent Capabilities & Persona](#-agent-capabilities--persona)
+- [System Architecture](#%EF%B8%8F-system-architecture)
+- [Technology Stack](#-technology-stack)
+- [Infrastructure & DevOps](#-infrastructure--devops)
+- [Conversational Intelligence Design](#-conversational-intelligence-design)
+- [Performance Metrics & Benchmarks](#-performance-metrics--benchmarks)
+- [Quality Assurance & Validation](#-quality-assurance--validation)
+- [Project Evolution Timeline](#-project-evolution-timeline)
+- [Key Learnings & Insights](#-key-learnings--insights)
+- [Future Enhancement Opportunities](#%EF%B8%8F-future-enhancement-opportunities)
+- [Key Technical Patterns Explored](#-key-technical-patterns-explored)
+- [Technical References & Inspirations](#-technical-references--inspirations)
+- [Let's Connect](#-lets-connect)
 
 ---
 
