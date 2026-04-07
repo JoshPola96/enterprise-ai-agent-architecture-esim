@@ -7,25 +7,28 @@
 
 ---
 
+**TL;DR:** Architected and deployed a production-grade AI agent using Gemini Flash 2.5, FastAPI, Qdrant, and Redis Streams. Replaced 24/7 human support for an eSIM provider with sub-5 second response times, full in-chat Stripe checkout, and zero-hallucination guardrails.
+
+---
+
 ## 📖 Table of Contents
 
-- [Repository Overview](#-repository-overview)
-- [Project Genesis & Collaboration](#-project-genesis--partnership)
-- [Technical Highlights & Innovations](#-technical-highlights--innovations)
-- [Agent Capabilities & Persona](#-agent-capabilities--persona)
-- [System Architecture](#-system-architecture)
-- [Technology Stack](#-technology-stack)
-- [Infrastructure & DevOps](#-infrastructure--devops)
-- [Conversational Intelligence Design](#-conversational-intelligence-design)
-- [Performance Metrics & Benchmarks](#-performance-metrics--benchmarks)
-- [Quality Assurance & Validation](#-quality-assurance--validation)
-- [Project Evolution Timeline](#-project-evolution-timeline)
-- [Key Learnings & Insights](#-key-learnings--insights)
-- [Future Enhancement Opportunities](#-future-enhancement-opportunities)
-- [Key Technical Patterns Explored](#-key-technical-patterns-explored)
-- [Technical References & Inspirations](#-technical-references--inspirations)
-- [About the Developer](#-about-the-developer)
-- [Acknowledgments & Project Ownership](#-acknowledgments--project-ownership)
+- [Repository Overview](#repository-overview)
+- [Project Genesis & Partnership](#project-genesis--partnership)
+- [Technical Highlights & Innovations](#technical-highlights--innovations)
+- [Agent Capabilities & Persona](#agent-capabilities--persona)
+- [System Architecture](#system-architecture)
+- [Technology Stack](#technology-stack)
+- [Infrastructure & DevOps](#infrastructure--devops)
+- [Conversational Intelligence Design](#conversational-intelligence-design)
+- [Performance Metrics & Benchmarks](#performance-metrics--benchmarks)
+- [Quality Assurance & Validation](#quality-assurance--validation)
+- [Project Evolution Timeline](#project-evolution-timeline)
+- [Key Learnings & Insights](#key-learnings--insights)
+- [Future Enhancement Opportunities](#future-enhancement-opportunities)
+- [Key Technical Patterns Explored](#key-technical-patterns-explored)
+- [Technical References & Inspirations](#technical-references--inspirations)
+- [Let's Connect](#lets-connect)
 
 ---
 
@@ -75,8 +78,8 @@
 **Technical Execution**: I was engaged as AI Engineer & DevOps Architect to transform this vision into a production-ready system capable of handling the complete customer lifecycle across multiple messaging platforms.
 
 **Collaboration Model**:
-- **Herman's Domain**: Business requirements, product vision, domain expertise, market strategy
-- **My Domain**: Technology stack selection, system architecture, implementation, deployment, operations
+- **Business Strategy & Product Vision (Herman Polat)**: Business requirements, product vision, domain expertise, market strategy
+- **Technical Architecture & Execution (Joshua Peter Polaprayil)**: Technology stack selection, system architecture, implementation, deployment, operations
 - **Shared Success**: A system that autonomously handles thousands of customer interactions with sub-5s response times
 
 **Result**: A production platform that replaced the need for human support agents while maintaining high customer satisfaction—demonstrating the commercial viability of agentic AI in customer service.
@@ -166,7 +169,7 @@ Implemented multi-tier memory architecture balancing speed, persistence, and sem
 | Phase | Timeline | Key Characteristics |
 | :--- | :--- | :--- |
 | **Phase 1: Multi-Agent Exploration** | Jul–Sep 2025 | • Experimented with specialized agent coordination<br>• Validated agentic workflows for complex conversations<br>• **Bottleneck:** High latency in agent handoffs<br>• **Challenge:** Context window management |
-| **Phase 2: Simplified Production** | Oct–Dec 2025 | • Consolidated to **Single-Agent** with specialized capabilities<br>• Migrated to **Gemini Flash 2.0** (1M tokens)<br>• Implemented persistent **Qdrant** storage<br>• **Result:** Achieved 60% latency reduction |
+| **Phase 2: Simplified Production** | Oct–Dec 2025 | • Consolidated to **Single-Agent** with specialized capabilities<br>• Migrated to **Gemini Flash 2.5** (1M tokens)<br>• Implemented persistent **Qdrant** storage<br>• **Result:** Achieved 60% latency reduction |
 | **Phase 3: Complete Commerce & Proactive Engagement** | Jan–Mar 2026 | • In-chat payment processing (card checkout + wallet balance)<br>• Instant eSIM provisioning with activation code surfacing<br>• Free trial claiming with async provisioning handling<br>• **Proactive notifications**: backend-initiated events via Redis Streams<br>• Exactly-once delivery, retry logic, dead-letter queue, pending store<br>• Automated backup system integrated into deployment lifecycle |
 
 **Lesson**: Architectural simplicity often outperforms complexity in production environments
@@ -395,7 +398,7 @@ The agent operates as an **expert travel connectivity consultant**—combining p
 │  │       ↓            ↓             ↓                    │  │
 │  │  [Phantom Login Handler] → [Synthesizer]              │  │
 │  │                                                       │  │
-│  │  • LLM: Gemini Flash 2.0 (1M token context)           │  │
+│  │  • LLM: Gemini Flash 2.5 (1M token context)           │  │
 │  │  • Specialized capabilities via tool system           │  │
 │  │  • Budget limits prevent runaway operations           │  │
 │  │  • Multi-layer validation for accuracy                │  │
@@ -437,7 +440,7 @@ USER MESSAGE
 │  3. Inject system hints:                                    │
 │     • Auth state changes (login detection)                  │
 │     • Timeout risk warnings (if response time high)         │
-│  4. LLM inference (Gemini Flash 2.0):                       │
+│  4. LLM inference (Gemini Flash 2.5):                       │
 │     • 1M token context window                               │
 │     • Comprehensive system instructions                     │
 │     • Tool calling with structured outputs                  │
@@ -451,6 +454,8 @@ USER MESSAGE
 │  Decision Logic:                                            │
 │  ├─ Has actionable tool calls? ────────────> [TOOL NODE]    │
 │  ├─ Only final response wrapper? ──────────> [END]          │
+│  ├─ Raw text (content, no tools)? ─────────> [AGENT NODE]   │
+│  │   (Inject correction, force tool re-wrap)                │
 │  └─ Empty output? ─────────────────────────> [AGENT NODE]   │
 │      (Retry with system hint to force response)             │
 └─────────────────────────────────────────────────────────────┘
@@ -520,7 +525,7 @@ USER MESSAGE
 | **Web Framework** | FastAPI 0.119.0 | Async API with automatic OpenAPI docs |
 | **ASGI Server** | Uvicorn + Gunicorn | Production multi-worker server (5 workers default) |
 | **Agent Orchestration** | LangGraph 0.6.10 | Finite-state machine workflows |
-| **Primary LLM** | Gemini Flash 2.0 | 1M token context, native tool calling |
+| **Primary LLM** | Gemini Flash 2.5 | 1M token context, native tool calling |
 | **Embeddings** | Google Generative AI | 768-dim vectors for semantic search |
 
 ### Data Layer
@@ -617,6 +622,7 @@ Core capabilities:
 - `./manage.sh backup [--dry-run]`: Run full backup (PostgreSQL + Qdrant)
 - `./manage.sh backup-list`: List all available backup files with sizes
 - `./manage.sh restore [list|postgres|qdrant] ...`: Restore from backup
+- `./manage.sh make-migrations "description"`: Auto-generate an Alembic migration from the current model diff
 
 Intelligent features:
 
@@ -862,10 +868,12 @@ The agent employs sophisticated prompt engineering to achieve human-like convers
 - Proactively mentions important details (coverage, speeds, restrictions)
 
 **Troubleshooter Mode** (Technical Support)
+- Asks OS type (iOS vs. Android) first — every time, before any instructions, since steps differ significantly
 - Gathers device type, OS version, and symptom description
-- Follows systematic diagnostic flowchart
-- Provides step-by-step instructions with visual confirmation
-- Tracks progress and adapts based on user responses
+- Distinguishes clearly between Install, Activate, and Troubleshoot stages — never conflates them
+- Provides step-by-step instructions one at a time, waiting for confirmation before advancing
+- Never repeats a diagnostic question already asked in the same conversation
+- Tracks progress and adapts based on user responses; escalates to support ticket as a last resort
 
 **Account Manager Mode** (User Profile)
 - Handles authentication with minimal friction
@@ -907,7 +915,7 @@ The agent employs sophisticated prompt engineering to achieve human-like convers
 | **BM25 Keyword Search** | 30-80ms | In-memory sparse index |
 | **RRF Fusion** | 10-20ms | Rank aggregation algorithm |
 | **Cross-Encoder Rerank** | 150-350ms | CPU-based scoring (ms-marco) |
-| **Gemini Inference** | 250-800ms | Dependent on prompt complexity |
+| **Gemini Inference** | 250-800ms | Time-to-First-Token (TTFT) for streaming responses |
 | **External API Call** | 100-500ms | Network latency to third-parties |
 | **TOTAL (Simple)** | **1.5 - 3s** | "What's my balance?" |
 | **TOTAL (Complex)** | **3 - 5s** | Multi-tool synthesis |
@@ -1069,7 +1077,7 @@ The system was validated against comprehensive real-world usage patterns represe
 - **Milestone**: Successfully proved concept, planned production pivot
 
 ### October 2025: Phase 2 Transition (Production Re-Architecture)
-- Migration to Gemini Flash 2.0 (1M token context)
+- Migration to Gemini Flash 2.5 (1M token context)
 - Shift to single-agent + specialized tools pattern
 - Qdrant integration for persistent vector storage
 - Design of identity-aware authentication system
@@ -1094,7 +1102,7 @@ The system was validated against comprehensive real-world usage patterns represe
 - In-chat payment processing: card checkout via Stripe + instant wallet balance payments
 - Free trial provisioning with async eSIM generation handling
 - Activation code (LPA) surfaced automatically post-purchase; installation guidance begins in the same agent turn
-- Backend-initiated notification system: Redis Streams consumer with exactly-once delivery, retry logic, dead-letter queue, and pending store for unlinked users
+- Backend-initiated notification system: Redis Streams consumer (handling exactly-once delivery, retry logic, and dead-letter queues) with pending store for unlinked users
 - Webhook endpoint for structured backend events (payment events, data alerts, plan expiry)
 - Automated database backup system (`scripts/backup/`) integrated into deployment lifecycle
 - Schema migrations: billing identity fields for payment processing
@@ -1117,7 +1125,7 @@ The system was validated against comprehensive real-world usage patterns represe
 ### 2. Context Windows Transform Architecture
 **Lesson**: 128k tokens insufficient for full conversation history + KB context + system prompt.
 
-**Decision**: Gemini Flash 2.0's 1M tokens eliminated need for complex memory management:
+**Decision**: Gemini Flash 2.5's 1M tokens eliminated need for complex memory management:
 - No context pruning logic required
 - Can include full conversation history
 - Reduces "context amnesia" issues
@@ -1261,7 +1269,7 @@ Impact: No dedicated security audit phase required — most attack surfaces were
 **Pattern Explored**: Cross-platform identity resolution
 
 **Conceptual Approach**:
-- Map platform-specific identifiers (Telegram ID, WhatsApp number, web session) to a unified user identity
+- Map platform-specific identifiers (Telegram ID, WhatsApp number, web session) to a unified user identity; the notification system can also resolve users by email address or backend numeric ID — whichever the backend has available
 - Implement passwordless authentication (OTP via email/SMS - no password storage vulnerabilities)
 - Preserve conversation context across authentication state changes
 - Handle session expiry gracefully without losing user intent
@@ -1349,6 +1357,26 @@ Random UUIDv4 keys insert at arbitrary positions in a B-tree index, causing freq
 
 **Learning:** A small implementation detail (48 bits of timestamp vs. all random) eliminates a class of database performance problems entirely, with zero application-layer changes required.
 
+### 7. Exactly-Once Notification Delivery via Redis Streams
+
+**Challenge**: Backend events (payment confirmations, data alerts) must reach the user exactly once — even across worker crashes, Stripe retries, and users who haven't yet messaged the bot.
+
+**Pattern**: Redis Streams consumer groups with layered reliability.
+
+**What I built**:
+- A dedicated consumer group (`notification_consumers`) where each Gunicorn worker competes for messages — Redis guarantees only one worker processes each message ID
+- On success: `XACK` removes the message from the pending entries list
+- On failure: re-enqueue with an incremented `_retries` counter, then `XACK` the original — prevents the original from being reclaimed while ensuring retry
+- After max retries (3): write to a dead-letter stream with full context for manual inspection
+- On worker restart: `XPENDING` + `XCLAIM` recovers messages idle >2 minutes from crashed workers — no message is lost to a restart
+- A `_SafeFormat` dict wrapper handles missing template keys in event payloads — incomplete events never raise a `KeyError`, missing fields render as `[key: not provided]`
+
+**Pending store for unregistered users**:
+
+The backend can fire events for users who haven't yet messaged the bot and have no registered contact channel. Instead of dropping the event, it's stored in Redis with a 7-day TTL (`pending_notif:{identifier}`). A background task scans all pending keys every 5 minutes; once a channel appears, it atomically deletes the key and delivers everything queued — preventing double delivery if two workers race.
+
+**Learning**: Exactly-once delivery without a dedicated broker (Kafka/SQS) is achievable with Redis Streams consumer group semantics. The consumer group handles most of the complexity; the re-enqueue-then-ack pattern handles the rest cleanly.
+
 ---
 
 ## 📚 Technical References & Inspirations
@@ -1382,7 +1410,7 @@ Random UUIDv4 keys insert at arbitrary positions in a B-tree index, causing freq
 - Chosen for: Hybrid search support, persistent storage, Docker-friendly
 
 **LLM Providers**
-- [Google Gemini](https://ai.google.dev/): Gemini Flash 2.0 (1M token context)
+- [Google Gemini](https://ai.google.dev/): Gemini Flash 2.5 (1M token context)
 - Chosen for: Context window, speed, native tool calling, cost-effectiveness
 
 **Infrastructure & DevOps**
@@ -1410,14 +1438,16 @@ Random UUIDv4 keys insert at arbitrary positions in a B-tree index, causing freq
 
 ---
 
-## 👨‍💻 About the Developer
+## 🤝 Let's Connect
 
-**Joshua Peter Polaprayil** Full Stack AI Engineer
+**Joshua Peter Polaprayil** | Full Stack AI Engineer
 
-**Connect:**
+Feel free to reach out if you have questions about the architecture, technical decisions, or want to discuss similar projects!
+
 - **LinkedIn:** [linkedin.com/in/josh33-peter10](https://www.linkedin.com/in/josh33-peter10/)
 - **Email:** [josh19peter96@gmail.com](mailto:josh19peter96@gmail.com)
 - **GitHub:** [github.com/JoshPola96](https://github.com/JoshPola96)
+
 ---
 
 ## 🙏 Acknowledgments & Project Ownership
@@ -1434,48 +1464,14 @@ This project was **conceived and commissioned by Herman Polat**, CEO of **[EsimT
 
 **The idea belongs to Herman and EsimTime.** This case study documents my technical implementation of that vision.
 
-### Technical Implementation
-
-As the AI Engineer on this project, my contribution was the technical architecture and implementation:
-- Technology research and selection
-- System design and architecture decisions
-- AI agent implementation and RAG systems
-- Authentication and production hardening
-- Testing frameworks and deployment automation
-
-### Collaborative Partnership
-
-This project demonstrates what's possible when business vision meets technical execution:
-- **Herman provided**: The problem to solve, business requirements, and market insights
-- **I contributed**: The technical solution, architecture, and engineering implementation
-- **EsimTime Team**: Backend API support and integration assistance
-
 ### Deep Gratitude
 
 **Special Thanks:**
 - **Herman Polat** (EsimTime CEO) - For the opportunity, trust, and collaborative partnership throughout this journey
 - **EsimTime Engineering Team** - Backend API integration and technical support
-- **Google AI** - Gemini Flash 2.0 API access
+- **Google AI** - Gemini Flash 2.5 API access
 - **LangChain & Qdrant Teams** - Excellent open-source tools and documentation
 - **The AI Research Community** - For publishing papers and patterns that informed this work
-
-### What This Repository Represents
-
-This is a **portfolio and learning showcase** documenting:
-- ✅ My engineering skills and problem-solving approach
-- ✅ Technical patterns I explored and learnings I gained
-- ✅ Publicly available architectural concepts (nothing proprietary)
-
-This is **NOT**:
-- ❌ Source code (remains proprietary to EsimTime)
-- ❌ Business-confidential information
-- ❌ A competing product or service
-
-**Built With:**
-- ❤️ Passion for solving real-world problems with AI
-- 🧠 6 months of learning, research, and iteration
-- 🚀 Commitment to production-grade engineering practices
-- 🤝 Respect for collaborative partnerships
 
 ---
 
@@ -1487,15 +1483,6 @@ This repository contains **architectural documentation and case study materials 
 The actual codebase remains proprietary to EsimTime Inc.
 
 **Usage**: This documentation may be freely referenced for educational purposes and portfolio showcasing.
-
----
-
-## 💬 Questions?
-
-Feel free to reach out if you have questions about the architecture, technical decisions, or want to discuss similar projects!
-
-- **LinkedIn:** [linkedin.com/in/josh33-peter10](https://www.linkedin.com/in/josh33-peter10/)
-- **Email:** [josh19peter96@gmail.com](mailto:josh19peter96@gmail.com)
 
 ---
 
