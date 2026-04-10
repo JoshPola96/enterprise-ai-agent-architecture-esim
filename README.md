@@ -337,7 +337,7 @@ The agent operates as an **expert travel connectivity consultant**—combining p
 - **90-day rolling inactivity timeout** — frequent users stay authenticated indefinitely; a user inactive for 90+ days must re-authenticate
 - **Two-clock expiry model:** the 90-day inactivity window and the JWT access token expiry are tracked separately — the session cannot outlive a revoked token, whichever expires first takes precedence
 - **Graceful mid-conversation expiry:** when a session expires mid-conversation (401), the original intent is preserved as a pending task and surfaced in the re-authentication prompt
-- **Debounce cache:** a 60-second in-process session check cache prevents redundant database hits during multi-tool turns where session state is checked multiple times in rapid succession
+- **Debounce cache:** a 60-second in-process session check cache prevents redundant database hits during multi-tool turns where `get_session_data()` is called multiple times in rapid succession — particularly relevant during the Priority Authentication phase where login + dependent tools execute in the same turn
 - **Three session states:**
   - `is_active=False`, `login_id SET` → Pending login (OTP sent, not yet verified)
   - `is_active=False`, `login_id NULL` → Logged out
@@ -375,7 +375,13 @@ The agent operates as an **expert travel connectivity consultant**—combining p
 │  Telegram Bot API  │  WhatsApp (Twilio)  │  Future: Web     │
 └────────────┬────────────────────────────────────────────────┘
              │
-             ▼
+             │        ┌──────────────────────────────────────┐
+             │        │  ESIMTIME BACKEND / STRIPE (Proactive)│
+             │        │  POST /api/v1/agent/webhook           │
+             │        │  X-Agent-Secret + idempotency key     │
+             │        └────────────┬─────────────────────────┘
+             │                     │
+             ▼                     ▼
 ┌─────────────────────────────────────────────────────────────┐
 │              FASTAPI APPLICATION (Port 8000)                │
 │  ┌───────────────────────────────────────────────────────┐  │
@@ -392,14 +398,23 @@ The agent operates as an **expert travel connectivity consultant**—combining p
 │  │  • Intent Preservation: 401 recovery, pending tasks   │  │
 │  └───────────────────────────────────────────────────────┘  │
 │  ┌───────────────────────────────────────────────────────┐  │
+│  │  NotificationConsumer (per-worker, Redis Streams)     │  │
+│  │  • Consumer group: exactly-once delivery guarantee    │  │
+│  │  • Retry (×3) + dead-letter queue + stale reclaim     │  │
+│  │  • Pending store: 7-day TTL for unlinked users        │  │
+│  │  • 5-minute retry loop for pending delivery           │  │
+│  │  • _SafeFormat: missing template keys render safely   │  │
+│  └────────────────────────┬──────────────────────────────┘  │
+│                           │ (injected as agent trigger)     │
+│  ┌───────────────────────────────────────────────────────┐  │
 │  │      AGENTIC ORCHESTRATION (LangGraph FSM)            │  │
 │  │                                                       │  │
 │  │  [Agent Node] → [Router] → [Tool Executor]            │  │
 │  │       ↓            ↓             ↓                    │  │
 │  │  [Phantom Login Handler] → [Synthesizer]              │  │
 │  │                                                       │  │
-│  │  • LLM: Gemini Flash 2.5 (1M token context)           │  │
-│  │  • Specialized capabilities via tool system           │  │
+│  │  • LLM: Gemini Flash 2.0 (1M token context)           │  │
+│  │  • 23 tools: Auth(6) API(11) Commerce(4) KB(1) FR(1)  │  │
 │  │  • Budget limits prevent runaway operations           │  │
 │  │  • Multi-layer validation for accuracy                │  │
 │  └───────────────────────────────────────────────────────┘  │
@@ -414,10 +429,13 @@ The agent operates as an **expert travel connectivity consultant**—combining p
 │  • Conversation Logs  • Distributed     • Conversation      │
 │  • Audit Trail        •   Locks         •   Memories        │
 │  • LangGraph States   • Rate Limits     • Hybrid Search     │
-│  • Alembic Migrations • BM25 State      •   (BM25+Vector)   │
+│  • Billing IDs        • Notif. Stream   •   (BM25+Vector)   │
+│  • Alembic Versions   • Dead-Letter Q.                      │
+│                       • Pending Intents                     │
 │                                                             │
 │  External APIs                                              │
 │  • EsimTime REST API (Products, Orders, Auth, Support)      │
+│  • Stripe (Checkout sessions, event webhooks)               │
 │  • Twilio WhatsApp Business API                             │
 │  • Telegram Bot API (Webhook mode)                          │
 └─────────────────────────────────────────────────────────────┘
@@ -1362,6 +1380,8 @@ Random UUIDv4 keys insert at arbitrary positions in a B-tree index, causing freq
 **Challenge**: Backend events (payment confirmations, data alerts) must reach the user exactly once — even across worker crashes, Stripe retries, and users who haven't yet messaged the bot.
 
 **Pattern**: Redis Streams consumer groups with layered reliability.
+
+**A `_SafeFormat(dict)` wrapper** overrides `__missing__` to return `"[key: not provided]"` for any absent field instead of raising a `KeyError`. Incomplete or partially-populated backend payloads (e.g., a `payment_completed` event that omits `iccid`) never crash the framer — the missing field renders as a visible placeholder in the agent's trigger string, making the omission auditable rather than silent.
 
 **What I built**:
 - A dedicated consumer group (`notification_consumers`) where each Gunicorn worker competes for messages — Redis guarantees only one worker processes each message ID
