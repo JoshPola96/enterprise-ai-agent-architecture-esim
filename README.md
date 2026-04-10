@@ -1404,7 +1404,7 @@ The backend can fire events for users who haven't yet messaged the bot and have 
 ### Research Papers & Publications
 
 **MemoAI: Episodic Memory for LLMs**
-- Paper: [MemoAI (2023)](https://arxiv.org/abs/2310.10809)
+- Paper: [MemoAI (2023)](https://arxiv.org/abs/2504.19413)
 - Inspiration for hybrid memory architecture (episodic + semantic)
 - Applied: Dual-memory system with Qdrant vector store
 
@@ -1427,7 +1427,7 @@ The backend can fire events for users who haven't yet messaged the bot and have 
 
 **Vector Databases**
 - [Qdrant](https://qdrant.tech/documentation/): High-performance vector search
-- Chosen for: Hybrid search support, persistent storage, Docker-friendly
+- Chosen for: Hybrid search support, persistent storage, Docker-friendly, Async operations
 
 **LLM Providers**
 - [Google Gemini](https://ai.google.dev/): Gemini Flash 2.5 (1M token context)
