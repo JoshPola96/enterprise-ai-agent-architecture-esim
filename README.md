@@ -376,9 +376,9 @@ The agent operates as an **expert travel connectivity consultant**—combining p
 └────────────┬────────────────────────────────────────────────┘
              │
              │        ┌──────────────────────────────────────┐
-             │        │  ESIMTIME BACKEND / STRIPE (Proactive)│
-             │        │  POST /api/v1/agent/webhook           │
-             │        │  X-Agent-Secret + idempotency key     │
+             │        │ ESIMTIME BACKEND / STRIPE (Proactive)│
+             │        │ POST /api/v1/agent/webhook           │
+             │        │ X-Agent-Secret + idempotency key     │
              │        └────────────┬─────────────────────────┘
              │                     │
              ▼                     ▼
