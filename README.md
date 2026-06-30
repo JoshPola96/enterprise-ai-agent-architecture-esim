@@ -8,7 +8,9 @@ This document serves as a capability overview and architectural footprint for te
 
 ---
 
+<p align="center">
 # 🌍 EsimTime — Production AI Agent Platform
+</p>
 
 <p align="center">
   <strong>Autonomous Multi-Channel eSIM Commerce via Conversational AI</strong><br>
