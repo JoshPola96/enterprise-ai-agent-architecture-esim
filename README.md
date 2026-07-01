@@ -12,12 +12,13 @@ This document reflects that evolution. It serves as a high-level capability over
 
 ---
 
-<h1 align="center"># 🌍 EsimTime — Production AI Agent Platform </h1>
-
-<p align="center">
-  <strong>Autonomous Multi-Channel eSIM Commerce via Conversational AI</strong><br>
-  <em>Full-stack implementation: AI · Commerce · Infrastructure · Security · DevOps</em>
-</p>
+<div align="center">
+  <h1>🌍 EsimTime — Production AI Agent Platform</h1>
+  <p>
+    <strong>Autonomous Multi-Channel eSIM Commerce via Conversational AI</strong><br />
+    <em>Full-stack implementation: AI · Commerce · Infrastructure · Security · DevOps</em>
+  </p>
+</div>
 
 ---
 
