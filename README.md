@@ -1,14 +1,18 @@
 ## 💎 A Note to the Community
 
-When the initial architecture for this project was drafted in late 2025, deploying a fully autonomous, transaction-capable agent into a production environment was an outlier. The industry was largely focused on stateless chatbots and basic RAG. During that early phase, we built in public and shared our infrastructure methodologies freely to help advance the emerging agentic ecosystem. We're genuinely proud to have contributed to that momentum when it mattered.
+When work on this platform began in July 2025, transaction-capable autonomous agents—ones that could manage context, hold state, and seamlessly complete a purchase—were not a commercial category. They were just whitepapers and roadmap slides from the largest tech labs in the world.
 
-Today, autonomous agents are the industry standard. EsimTime is now a maturing, revenue-generating platform operating at scale. Consequently, our engineering strategy has shifted from public ecosystem contribution to protecting our competitive advantage.
+The timeline bears that out. OpenAI's in-chat checkout didn't go live until September 2025, few months afterwards, our agent was already provisioning eSIMs and taking payments from real customers. Google didn't publish its agentic commerce protocol until January 2026. We didn't have a massive coalition, a protocol committee, or a dedicated platform team. We had a founder guiding the vision and a focused three-person engineering unit—owning the AI infrastructure, backend, and frontend UX—collaborating tightly to perfect every endpoint and user flow.
 
-This document serves as a capability overview and architectural footprint for technical diligence, investors, and high-signal engineering reviews. The proprietary source code, internal algorithms, and configuration topologies remain strictly private.
+That gap matters. It explains why the core challenges of this architecture—proactive delivery guarantees, cross-platform identity, and exactly-once notification semantics—were solved from first principles rather than borrowed from a reference implementation. There simply wasn't one yet. Early on, we built in public to help advance the emerging ecosystem, and we are proud of our contribution to that momentum.
+
+Today, as Esimtime matures into a stable, revenue-generating platform operating at scale, our focus naturally evolves. We are no longer proving that this model works; we are scaling it. Consequently, our engineering strategy has transitioned from public ecosystem contribution to executing on our next phase of commercial growth.
+
+This document reflects that evolution. It serves as a high-level capability overview and architectural footprint for technical diligence, investors, and high-signal engineering reviews—not an implementation guide. Our proprietary source code, internal algorithms, and exact configuration topologies remain strictly private.
 
 ---
 
-<h1 align="center">🌍 EsimTime — Production AI Agent Platform</h1>
+# 🌍 EsimTime — Production AI Agent Platform
 
 <p align="center">
   <strong>Autonomous Multi-Channel eSIM Commerce via Conversational AI</strong><br>
