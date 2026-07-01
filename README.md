@@ -12,7 +12,7 @@ This document reflects that evolution. It serves as a high-level capability over
 
 ---
 
-# 🌍 EsimTime — Production AI Agent Platform
+<h1 align="center"># 🌍 EsimTime — Production AI Agent Platform </h1>
 
 <p align="center">
   <strong>Autonomous Multi-Channel eSIM Commerce via Conversational AI</strong><br>
