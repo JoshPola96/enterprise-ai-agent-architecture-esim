@@ -37,12 +37,11 @@ A production AI agent handling the complete eSIM customer lifecycle — discover
 
 | | |
 |---|---|
-| **Response time** | 1.5–3s simple · 3–5s complex multi-tool synthesis |
-| **Infrastructure latency** | Sub-1s; remainder is LLM inference |
+| **Response time** | 7–28s in production, dominated by LLM output tokens — see [Performance](#performance) |
 | **Tool execution accuracy** | >99% across 27 tools |
 | **Autonomous resolution** | 95%+, zero human intervention |
-| **Under live attack simulation** | 19,164 malicious payloads absorbed at 319 RPS while legitimate traffic held **100% success** |
-| **Webhook ingest** | median 5ms · p95 9ms · p99 14ms · 100% delivery |
+| **Under adversarial load test** | 19,164 malicious payloads absorbed at 319 RPS while legitimate traffic held **100% success** (bench, pre-multimodal) |
+| **Webhook ingest** | median 5ms · p95 9ms · p99 14ms · 100% delivery (bench) |
 | **Localisation** | 10 languages for system messaging, incl. RTL |
 | **Hardware** | CPU-only commodity VPS — no GPU, anywhere |
 | **Total running cost** | Under **$45/month** — versus $300–500 managed-cloud equivalent |
@@ -120,7 +119,7 @@ That constraint became the most productive design pressure in the project. It cl
 
 In practice: every model quantized to INT8 and served through ONNX Runtime on CPU rather than reaching for GPU inference. A two-tier query-embedding cache so repeat queries never touch the network. Retrieval fused server-side in the vector database rather than merged in application code. Speech models chosen by measured RTF-and-RSS trade-off rather than by reaching for the largest available.
 
-Result: sub-1s infrastructure latency end to end, with LLM inference accounting for the remainder of what the user perceives. Not because the hardware is fast — because nothing in the path is allowed to be wasteful.
+The result is a stack where infrastructure overhead is small relative to model inference — not because the hardware is fast, but because nothing in the path is allowed to be wasteful. (Actual production timings, and where they diverge from bench measurements, are in [Performance](#performance).)
 
 I think this is the more interesting engineering problem, and the more transferable one. Anyone can make a system fast with money. Making it fast without any is where the decisions actually live.
 
@@ -807,33 +806,48 @@ All services containerised on an internal bridge network. No container port is p
 
 ## Performance
 
+### A note on provenance
+
+Numbers in engineering write-ups are usually presented without saying where they came from. That makes them useless. So, explicitly:
+
+**Benchmark figures below were measured on a development machine with GPU disabled**, forcing the same CPU-only code path production executes. That makes them directionally honest but not production-equivalent — **production silicon runs roughly 2× slower per core** than the bench host.
+
+**The load test predates the multimodal work.** It was run against a lighter stack, before the speech models were added to each worker.
+
+**Memory figures transfer between machines. Latency figures do not.** RSS is architecture-independent; wall-clock is not. Everything below is labelled accordingly.
+
+Current production end-to-end times are **higher** than the bench figures, for reasons the sections after this one work through in detail.
+
+### Measured on production (live logs)
+
+| Path | Observed |
+|---|---|
+| Text turn, no tools | 8 – 12s |
+| Text turn, catalogue tools | 7 – 17s |
+| Text turn, large inventory payload | up to 28s |
+| Voice round-trip (end to end) | 24 – 28s |
+| Transcription (flat, any clip length) | 11 – 14s |
+| Speech synthesis | 1 – 3s |
+| Pre-LLM context assembly | 2 – 4s |
+
+Two findings from these logs drive current optimisation work:
+
+**Transcription cost is flat regardless of clip length** — a 1.5-second voice note costs the same as a 5-second one, because the encoder always processes a padded 30-second window. And the pipeline pays that encoder pass **twice**: once to detect language, once to transcribe. Roughly half the cost is a duplicated pass.
+
+**Output tokens dominate latency more than input tokens.** An inventory call returning 20 items added ~8,600 input tokens and forced ~2,600 output tokens — a 19-second LLM call. Compare a balance check: ~140 token delta, ~130 output, 2 seconds. The model is generating a formatted summary of everything handed to it, so the leverage is in trimming tool payloads before they reach the model, not in caching the prompt prefix.
+
+### Measured on bench (CPU-only, GPU disabled)
+
 | Metric | Value |
 |---|---|
-| Infrastructure latency (excl. inference) | Sub-1s |
-| Simple query, end to end | 1.5 – 3s |
-| Complex multi-tool synthesis | 3 – 5s |
 | Tool execution accuracy | >99% |
 | Autonomous resolution | 95%+ |
 | Webhook ingest | median 5ms · p95 9ms · p99 14ms |
+| Injection classification | p50 24ms · p95 32ms |
 | Concurrent users (multi-worker) | 125 – 250 |
-| Hardware | CPU-only commodity VPS |
+| Hardware | CPU-only, 8 cores |
 
-### Live attack simulation
-
-Steady-state figures were validated with an end-to-end adversarial load test against the live webhook endpoint: sixty seconds of mixed traffic combining **30 concurrent attackers** sending payloads specifically designed to trigger the CPU-bound injection classifier, alongside legitimate full-pipeline conversations running LLM inference and retrieval.
-
-| Traffic | Success | RPS | Avg | p95 |
-|---|---|---|---|---|
-| Legitimate (full pipeline) | **100%** | 0.23 | 95ms | 391ms |
-| Malicious (guard-blocked) | **100%** (19,164) | **319.40** | 84ms | 123ms |
-
-**The finding that mattered:** the quantized injection classifier sustained **over 319 malicious evaluations per second at p95 under 125ms** on eight CPU cores — while the legitimate message queue held **100% success at sub-400ms p95 throughout the attack**. The guard layer absorbs sustained attack volume without measurably degrading real users, which is the entire point of putting it inline rather than out of band.
-
-Memory held around 3 GB during the sustained attack, comfortably inside budget.
-
-The same test validated thread-contention tuning: worker count at half the core count leaves headroom for background inference threads rather than having event loops and ONNX threads fight for the same cores, and capping intra-op parallelism per evaluation reduces context-switch overhead under concurrent guard evaluations.
-
-### Where the time goes
+**Stage-level costs** — bench, indicative only:
 
 | Stage | Typical |
 |---|---|
@@ -844,8 +858,25 @@ The same test validated thread-contention tuning: worker count at half the core 
 | RRF fusion | 10–20ms |
 | Injection classification | ~24ms |
 | Cross-encoder rerank (CPU) | 150–350ms |
-| LLM inference | 250–800ms |
+| LLM inference (small payload) | 250–800ms |
 | External API | 100–500ms |
+
+### Adversarial load test (bench, pre-multimodal)
+
+Sixty seconds of mixed traffic against the webhook endpoint: **30 concurrent attackers** sending payloads designed to trigger the CPU-bound injection classifier, alongside legitimate full-pipeline conversations running LLM inference and retrieval.
+
+| Traffic | Success | RPS | Avg | p95 |
+|---|---|---|---|---|
+| Legitimate (full pipeline) | **100%** | 0.23 | 95ms | 391ms |
+| Malicious (guard-blocked) | **100%** (19,164) | **319.40** | 84ms | 123ms |
+
+**The finding that mattered:** the quantized injection classifier sustained **over 319 malicious evaluations per second at p95 under 125ms** on eight CPU cores — while the legitimate message queue held **100% success throughout the attack**. The guard layer absorbs sustained attack volume without measurably degrading real users, which is the point of putting it inline rather than out of band.
+
+Memory held around 3 GB during the sustained attack.
+
+The same test validated thread-contention tuning: worker count at half the core count leaves headroom for background inference threads rather than having event loops and ONNX threads fight for the same cores.
+
+**Caveat, stated plainly:** this ran before the speech models were added per worker, and on faster silicon than production. The guard layer's *relative* resilience is the durable finding; the absolute RPS figure would be lower on the production host today. It needs re-running against the current stack.
 
 The reranker and the model dominate. Everything else was optimised until it stopped mattering.
 
@@ -895,7 +926,11 @@ Things I'd want a reader to know rather than discover:
 
 **Multimodal is deployed but not yet validated at public scale.** Transcription quality varies across the language set, and synthesized output formatting is still being refined. It works; it isn't yet proven under real volume.
 
-**Voice round-trip latency is above target.** Production silicon runs roughly 2× slower per core than the benchmark host, putting current voice turns well above the text path. The identified fixes — thread tuning, dropping unused decoder work, and cached language hints to skip the duplicate encoder pass — are scoped and in progress.
+**Voice round-trip latency is well above target** — 24–28s in production. Two causes, both identified from logs: production silicon runs ~2× slower per core than the benchmark host, and the pipeline pays the transcription encoder pass twice (detect, then transcribe). Fixes are scoped and in progress: cached language hints to eliminate the duplicate pass, thread tuning, and dropping unused decoder work.
+
+**Large tool payloads dominate text latency.** An inventory call returning 20 items forces ~2,600 output tokens and a 19-second LLM call. Trimming what tools return before the model sees them is the highest-leverage fix outstanding, and it isn't done yet.
+
+**Published benchmarks predate the current stack.** The adversarial load test ran before the speech models were added per worker, on faster silicon than production. It needs re-running. The relative findings hold; the absolute numbers would be lower today.
 
 **Single-region, single-host.** No geographic redundancy. Appropriate for current scale, an explicit risk at larger scale.
 
@@ -1059,7 +1094,6 @@ Shared for portfolio and professional visibility purposes, with authorization.
 
 **Last updated:** July 2026
 **Status:** 🟢 Live in production
-
 <p align="center">
   <em>Built under constraint. Hardened under fire. Measured, not assumed.</em>
 </p>
