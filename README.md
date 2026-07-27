@@ -46,7 +46,7 @@ A production AI agent handling the complete eSIM customer lifecycle — discover
 | **Localisation** | 10 languages for system messaging, incl. RTL |
 | **Hardware** | CPU-only commodity VPS — no GPU, anywhere |
 | **Total running cost** | Under **$45/month** — versus $300–500 managed-cloud equivalent |
-| **Recognition** | **#5 AI company on F6S** (May 2026) · **Top 5 of 39** at investor showcase |
+| **Recognition** | **Top-5 AI company on [F6S](https://www.f6s.com/companies/artificial-intelligence/united-states/wyoming/sheridan/co)** (peaked #5, May 2026) · **Top 5 of 39** at investor showcase |
 
 Five ML models — reranking, prompt-injection classification, PII detection, risk scoring, speech — all quantized INT8, all on CPU, several inside the request path.
 
@@ -67,6 +67,7 @@ Five ML models — reranking, prompt-injection classification, PII detection, ri
 - [Message Delivery & Localisation](#message-delivery--localisation)
 - [Constraints You Cannot Engineer Around](#constraints-you-cannot-engineer-around)
 - [Operating Under a Memory Ceiling](#operating-under-a-memory-ceiling)
+- [Voice Latency & Prompt Caching](#round-two-what-production-revealed-that-the-benchmark-couldnt)
 - [The Model Selection Problem](#the-model-selection-problem)
 - [Temperature, Attention, and the Wrong Product ID](#temperature-attention-and-the-wrong-product-id)
 - [Evaluation & MLOps Tooling](#evaluation--mlops-tooling)
@@ -333,7 +334,7 @@ Oversized and overlong clips are rejected before decode rather than after paying
 
 Both models are lazy-loaded once per worker, run on an isolated thread pool with a concurrency semaphore so a burst of voice messages can't starve text requests, and are baked into the image at build time rather than pulled at runtime — for reasons the memory-ceiling section explains at some cost.
 
-**Status:** deployed to production, under active tuning. Public validation at scale is ongoing.
+**Status:** deployed to production, under active tuning. Public validation at scale is ongoing. Current voice round-trips run longer than target on production silicon — the optimisation round covered in [the next section](#round-two-what-production-revealed-that-the-benchmark-couldnt) addresses it.
 
 ---
 
@@ -461,6 +462,41 @@ Two investigations worth keeping as examples of the discipline:
 
 Everything above is re-measured whenever the model set changes. Estimates are what produced the boot loop.
 
+### Round two: what production revealed that the benchmark couldn't
+
+The fix held. Production booted four workers in 25 seconds, loaded the speech model from the baked image with no runtime download, and ran roughly 40 hours with zero restarts, OOM kills, or worker recycles. The boot loop was genuinely gone.
+
+Then production logs surfaced three things no benchmark had shown.
+
+**Prod silicon was about 2× slower per core than the benchmark box.** The measured RTF from the model-selection table didn't survive contact with the actual host. Voice round-trips were landing at 23–28 seconds rather than the benchmark's implied range. The benchmark had been honest about being indicative — and it was still off by a factor that mattered. Architecture-independent figures like memory transfer between machines. Latency figures do not.
+
+**Transcription cost is flat regardless of clip length.** A 1.5-second voice note cost roughly the same as a 5.2-second one — around 11–14 seconds either way. The reason is that the encoder always processes a padded 30-second window whatever the actual audio duration. So the intuition "short clips are cheap" is simply false, and any optimisation premised on it is wasted effort. Transcription accounted for about 45% of every voice round-trip.
+
+**And the system was paying that encoder pass twice.** Once for language detection, once to actually transcribe. Nobody designed that; it's what you get from calling a convenience API without reading what it does underneath. Roughly half the transcription cost was a duplicated pass.
+
+Three fixes followed, in ascending order of care required:
+
+**Raise the per-transcription thread count.** This reversed my own earlier conservative call. I'd capped threads low out of a theoretical concern about contention between event loops and inference threads. Production showed the contention risk was hypothetical and the latency cost was real — a per-worker concurrency cap of one transcription already bounds the worst case, and the upstream model's rate limit means simultaneous voice traffic is rare. Measured cost beat theoretical risk.
+
+**Disable timestamp generation.** The transcription path only ever joins segment text and never reads timestamps, so generating timestamp tokens in the decoder was pure waste. Free improvement, zero behavioural change — the kind of thing you only find by reading what your own code actually consumes.
+
+**Cache the detected language per user to skip the detection pass.** This is the one that needed real care, because getting it wrong means transcribing someone's speech in the wrong language — a far worse failure than being slow. The design degrades to *current behaviour*, never to a wrong result:
+
+- The hint is written only on a high-confidence detection, and only after **two consecutive agreeing detections**. A single fluke can never lock a user into a language.
+- It's stored in the shared cache rather than per-worker memory, because messages round-robin across workers — a local cache would be wrong most of the time.
+- **The guardrail that makes it safe:** if a hinted transcription returns empty or whitespace for non-trivial audio, it immediately re-runs with detection enabled and overwrites the cached hint. A mismatch costs one extra pass. It cannot silently produce a wrong-language transcript.
+- Short TTL, and a single setting that disables the whole mechanism.
+
+Target for the round: roughly 12 seconds of transcription down to 3–6.
+
+### Measure before you build the optimisation
+
+The other finding was a static prefix of roughly 15,000 tokens re-sent on every single turn — system prompt plus tool schemas, neither of which ever changes. An obvious caching target, and the prompt was already structured correctly for it, with the static block first and dynamic state appended.
+
+The instinct is to go build explicit prompt caching. The better first move was one line: add the cached-token count to the existing token-usage log. The model tier already performs *implicit* caching above a prefix threshold, so some or all of the benefit may already have been arriving for free. Building an explicit cache without checking would have been a day of work to reimplement something already running.
+
+If explicit caching does prove necessary, the notes I wrote for it are mostly about failure modes rather than the happy path: caches are pinned to a model version and carry a TTL, so it needs a refresh path and graceful fallback to uncached rather than a hard failure; cached tool declarations can conflict with runtime tool binding, so that interaction needs verifying against the specific library version rather than assumed; and creation across multiple workers has to reuse the existing leader-election helpers rather than inventing a second coordination mechanism.
+
 ---
 
 ## The Model Selection Problem
@@ -493,17 +529,21 @@ The most instructive bug in the project, because the obvious fix was wrong and t
 
 **The root cause.** Catalogue tools return large JSON payloads. Dozens of products, each with an identifier, name, quota, duration, price, region. Selecting one specific identifier out of that is a needle-in-a-haystack retrieval problem happening inside the model's attention rather than in code — and the haystack grows with catalogue size. Add a strongly-weighted candidate from the prompt and the failure mode is predictable in hindsight.
 
-**The fix that didn't work — and made something else worse.** The instinctive lever is temperature. Google recommends around 1.0 for conversational agents, and there's a substantive reason for it: at that setting the model shows noticeably more analytical range. It reasons *around* a problem — weighing conflicting signals, noticing when the available data doesn't actually answer the question — rather than pattern-matching to the nearest template.
+**The fix that didn't work for this bug — but solved a different one.** The instinctive lever is temperature. Google recommends around 1.0 for conversational agents, and there's a real reason for it: the conversational range is noticeably better, and the model handles ambiguous or awkwardly-phrased input more gracefully.
 
-Dropping to 0.1 to force determinism reduced variance somewhat. It did not eliminate the wrong-ID selection. And it introduced a worse failure than the one it was meant to fix.
+It also, at that setting, fabricates.
 
-At low temperature the agent became **more confidently wrong**. Presented with a user's problem and a context window full of loosely related data, it would latch onto a single nearby datapoint and construct a fluent, plausible, factually unsupported explanation around it. I caught this repeatedly in tracing during a debugging session: the reasoning string showed the model selecting one piece of context — often only tangentially relevant — and reasoning forward from it as though it were the answer, rather than recognising that the data in hand didn't support a conclusion. Conflicting information available in the same context was simply not weighed. It wasn't hedging or asking; it was asserting.
+I caught this clearly during a long debugging session. Conversation history was being trimmed to a recent window, so in an extended exchange the model no longer had the earlier turns that actually contained the answer. Rather than recognising the gap, it selected a nearby datapoint still in context — often only tangentially relevant — and constructed a fluent, confident, factually unsupported explanation around it. The reasoning strings made it visible: the model reasoning forward from a fragment as though it were the answer, instead of noticing the data in hand didn't support a conclusion. Not hedging. Asserting.
 
-That inverts the usual intuition. Low temperature reads like the safe, factual setting — less randomness, fewer flights of fancy. In practice, for a multi-step reasoning agent, constraining sampling narrowed the model's ability to hold several possibilities open long enough to evaluate them. It collapsed to the first plausible path and committed. The randomness people associate with creativity is, in a reasoning context, partly what lets a model consider an alternative before discarding it.
+Two things were compounding. A wide sampling distribution gives the model room to generate a plausible completion where a narrower one would stay closer to what's actually supported. And an aggressively trimmed history removes the grounding that would have contradicted it. Together: confident fabrication in exactly the long, multi-step sessions where accuracy matters most.
 
-So the low-temperature "fix" cost conversational quality *and* reasoning quality, while leaving the original bug substantially intact.
+**Dropping to 0.1 fixed the fabrication.** Narrowing the distribution kept the model anchored to what the context genuinely supported, and the invented-explanation failure mode went away.
 
-That's the lesson: **temperature is a dial, and the bug wasn't on that dial.** Sampling randomness wasn't choosing the wrong ID — attention salience over a large payload was. Turning the temperature down made the model duller and more credulous without making it more correct.
+It did **not** fix the wrong product ID. That was the useful discovery — the two problems looked related and weren't. Fabrication was a sampling problem and moved with the temperature dial. Identifier selection was an *attention* problem — the right answer buried in a large payload, competing against a wrong answer with elevated weight from the prompt — and it didn't move at all.
+
+There's an honest cost to running at 0.1. Conversational output is measurably stiffer, and the graceful handling of messy real-world phrasing that 1.0 gave up is a genuine loss. That trade is only acceptable because the structural fixes below let correctness stop depending on the dial at all.
+
+**The lesson: temperature is one dial, and it only reaches one class of bug.** It governs how far the model will range beyond what the context supports — so it fixes fabrication. It does not govern which item the model picks out of a large payload, so it does nothing for selection. Diagnosing which kind of failure you have, before reaching for the setting everyone reaches for, is most of the work.
 
 **The fix that worked was structural.** Two changes, neither of which relies on the model behaving well:
 
@@ -513,7 +553,7 @@ That's the lesson: **temperature is a dial, and the bug wasn't on that dial.** S
 
 Together those reduce the failure probability from *unlikely-but-nonzero* to *structurally impossible*, and they let temperature go back up to where conversational quality lives.
 
-**The general shape of this.** The same failure class appears elsewhere: given a large context, the agent will sometimes construct a confident but illogical answer by latching onto whatever nearby data is superficially relevant — and lowering temperature makes that *more* likely, not less. The durable answer is never "instruct it more firmly" or "sample less randomly" — it's to shrink what the model has to select from, and to validate the selection outside the model.
+**The general shape of this.** Two distinct failure modes that present almost identically from the outside — a confidently wrong answer. One is the model ranging past what its context supports, which sampling temperature governs and history-trimming aggravates. The other is the model picking the wrong item from a large payload, which no prompt instruction and no sampling setting reliably fixes. For the second, the durable answer is always the same: shrink what the model has to select from, and validate the selection outside the model.
 
 Which is exactly the governance argument again, in a non-security setting. A prompt instruction saying *use the correct product ID* is signage. A cache check that rejects a wrong one is a locked door.
 
@@ -855,6 +895,8 @@ Things I'd want a reader to know rather than discover:
 
 **Multimodal is deployed but not yet validated at public scale.** Transcription quality varies across the language set, and synthesized output formatting is still being refined. It works; it isn't yet proven under real volume.
 
+**Voice round-trip latency is above target.** Production silicon runs roughly 2× slower per core than the benchmark host, putting current voice turns well above the text path. The identified fixes — thread tuning, dropping unused decoder work, and cached language hints to skip the duplicate encoder pass — are scoped and in progress.
+
 **Single-region, single-host.** No geographic redundancy. Appropriate for current scale, an explicit risk at larger scale.
 
 **Retrieval quality depends on a curated knowledge base.** The hybrid pipeline is only as good as what's indexed; zero-hit telemetry exists precisely because knowledge gaps are the most common cause of a poor answer, and closing them is manual work.
@@ -881,9 +923,17 @@ Things I'd want a reader to know rather than discover:
 
 **Beware tiered model routing.** It looks like free savings and usually isn't: intent detection is brittle across a wide surface, and an LLM router costs a second call plus a split-brain risk where the router and the agent reason from different context. Sometimes the cheaper architecture is one model and a shorter prompt.
 
-**Don't fix a selection bug with a sampling dial.** Lowering temperature to stop the agent choosing the wrong identifier didn't work — the bug was attention salience over a large payload, not sampling randomness. Shrink what the model has to choose from, then validate the choice outside the model.
+**Diagnose which kind of wrong answer you have.** Fabrication — the model ranging past what its context supports — moves with temperature and is aggravated by aggressive history trimming. Mis-selection — picking the wrong item out of a large payload — doesn't move with temperature at all. They look identical from outside and need completely different fixes.
 
-**Low temperature is not the "factual" setting.** This surprised me most. Constraining sampling made the agent *more* prone to confident fabrication — latching onto one tangentially-relevant datapoint and reasoning forward from it instead of recognising the data didn't support a conclusion. Some sampling range is what lets a model hold alternatives open long enough to weigh them. For multi-step reasoning agents, turning it down can buy determinism at the cost of judgement.
+**Benchmark on the hardware you deploy to.** Memory figures transfer between machines; latency figures don't. A model chosen on a fast development box was 2× slower on the production host, which is the difference between acceptable and unusable.
+
+**Check whether the optimisation already exists before building it.** A 15k-token static prefix looked like an obvious caching win — but the model tier already caches prefixes implicitly above a threshold. One line of extra logging answered whether the work was needed at all. Instrument before you engineer.
+
+**Read what your convenience API does underneath.** A single transcription call was running the encoder twice — once to detect language, once to transcribe. Half the cost of the most expensive stage in the pipeline was a duplicated pass nobody chose.
+
+**Reverse your own conservative calls when measurement contradicts them.** I'd capped inference threads low over a theoretical contention risk. Production showed the risk was hypothetical and the latency cost was real. Defending an earlier decision against new data is how systems stay slow.
+
+**Trimmed history plus wide sampling is a fabrication engine.** In long sessions, a short history window removes the grounding, and a wide distribution gives the model room to invent something plausible in its place. If you trim aggressively, watch what your temperature is doing.
 
 **Anything named in your prompt gets elevated attention.** That's usually what you want, and occasionally it's a bug: a strongly-weighted example can win over the correct answer when the model is selecting under uncertainty. Watch for it wherever the prompt names a specific value the model could pass through to a tool.
 
@@ -947,8 +997,8 @@ Built on the open-source ecosystem's work throughout — this document is partly
 
 ## Recognition
 
-**F6S Global Ranking — May 2026**
-Ranked **#5 AI company** on F6S, from a field of 2M+ startups. No paid promotion — driven by platform activity, product metrics, and public technical visibility.
+**F6S Ranking — May 2026**
+Peaked at **#5 AI company** in its F6S category, currently holding **top 6** — [live listing](https://www.f6s.com/companies/artificial-intelligence/united-states/wyoming/sheridan/co). Achieved with no paid promotion, driven by platform activity, product metrics, and public technical visibility. F6S reshared the announcement to their own audience.
 
 **Investor Showcase — Early 2026**
 Presented at a competitive startup demo day; the autonomous agent was the core product differentiator and the company placed **Top 5 of 39**. Architecture decisions were examined and validated by the investor panel on both technical and commercial grounds.
@@ -1009,6 +1059,7 @@ Shared for portfolio and professional visibility purposes, with authorization.
 
 **Last updated:** July 2026
 **Status:** 🟢 Live in production
+
 <p align="center">
   <em>Built under constraint. Hardened under fire. Measured, not assumed.</em>
 </p>
