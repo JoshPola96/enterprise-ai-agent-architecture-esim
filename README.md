@@ -17,6 +17,8 @@
 
 ---
 
+> **Scope** · Production case study — a system live with real users. Architecture and tradeoffs documented in full; the source is proprietary and not included.
+
 ## A Note Before You Read
 
 When I started this work in July 2025, transaction-capable autonomous agents — agents that hold state, manage identity, and complete a purchase end to end — were not a commercial category. They were whitepapers and roadmap slides from the largest labs in the world.
