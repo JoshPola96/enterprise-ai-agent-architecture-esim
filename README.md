@@ -19,6 +19,12 @@
 
 > **Scope** · Production case study — a system live with real users. Architecture and tradeoffs documented in full; the source is proprietary and not included.
 
+> [!IMPORTANT]
+> **Status note.** I designed, built and operated this platform from July 2025
+> until my handover in August 2026. This document describes the system as it stood at
+> that point — it is a snapshot, not a live record. I no longer maintain the platform
+> or hold access to it, and nothing here should be read as describing its current state.
+
 ## A Note Before You Read
 
 When I started this work in July 2025, transaction-capable autonomous agents — agents that hold state, manage identity, and complete a purchase end to end — were not a commercial category. They were whitepapers and roadmap slides from the largest labs in the world.
@@ -152,7 +158,7 @@ Shared for portfolio and professional visibility purposes, with authorization.
 ---
 
 **Last updated:** August 2026
-**Status:** 🟢 Live in production
+**Status:** Handed over August 2026 — documented as of that date
 
 <p align="center">
   <em>Built under constraint. Hardened under fire. Measured, not assumed.</em>
