@@ -3,7 +3,7 @@
 ### Engineering field notes from thirteen months of production agentic AI — CPU-only, under $45/month
 
 <p align="center">
-  <strong>Joshua Peter Polaprayil</strong> · Full-Stack AI Engineer<br>
+  <strong>Joshua Peter Polaprayil</strong> · Full-Stack AI Engineer<br/>
   <em>AI · Commerce · Retrieval · Security · Infrastructure</em>
 </p>
 
@@ -70,11 +70,12 @@ A production AI agent handling the complete eSIM customer lifecycle — discover
 **The model set, all on CPU:** three INT8 ONNX models in the request path — Meta's Llama Prompt Guard 2 for injection classification, a multilingual NER model for PII detection, and a cross-encoder reranker — plus self-hosted speech (faster-whisper at int8 and Piper TTS) and an offline-trained XGBoost risk classifier exported to ONNX.
 
 <p align="center">
-  <img src="docs/images/grafana_ss_1.jpeg" alt="Live Grafana operator dashboard showing conversations, answer success rate, typical reply time, and host and container capacity gauges" width="800"/>
+  <img src="docs/images/grafana_ss_1.jpeg" alt="Live Grafana operator dashboard showing conversations, answer success rate, typical reply time, and host and container capacity gauges" width="760"/>
 </p>
 <p align="center">
-  <img src="docs/images/latest_login_flow_ss1.jpeg" alt="WhatsApp screenshot of the login-relay authentication flow, including a fresh link issued on request and the welcome offer after login" width="280"/>
-  <img src="docs/images/purchase_flow_exolanation_ss.jpeg" alt="The agent explaining its own purchase-flow logic in plain language, matching the documented consultant behaviour" width="280"/>
+  <img src="docs/images/latest_login_flow_ss1.jpeg" alt="WhatsApp screenshot of the login-relay authentication flow, including a fresh link issued on request and the welcome offer after login" width="430"/>
+  &nbsp;&nbsp;
+  <img src="docs/images/purchase_flow_exolanation_ss.jpeg" alt="The agent explaining its own purchase-flow logic in plain language, matching the documented consultant behaviour" width="250"/>
 </p>
 <p align="center"><em>Not staged: the live operator dashboard, the login relay on the production domain, and the agent describing its own design when asked. Dashboard panels reflect their own time windows; the measured 7-day figures are in <a href="docs/06-performance.md">Performance</a>.</em></p>
 
