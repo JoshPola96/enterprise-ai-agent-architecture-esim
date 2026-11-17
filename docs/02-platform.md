@@ -169,7 +169,7 @@ The fix held. Production booted all four workers cleanly, loaded the speech mode
 
 Then production logs surfaced three things no benchmark had shown.
 
-**The benchmark had measured the wrong thing, not the wrong machine.** Voice round-trips were landing at 23–28 seconds against a component benchmark that implied far less. My first instinct was to blame the hardware — *prod is just slower than my laptop* — and I spent a while reasoning from an assumed slowdown factor. That was the wrong model of the problem, and it sent me looking in the wrong place.
+**The benchmark had measured the wrong thing, not the wrong machine.** Voice round-trips were landing at 24–28 seconds against a component benchmark that implied far less. My first instinct was to blame the hardware — *prod is just slower than my laptop* — and I spent a while reasoning from an assumed slowdown factor. That was the wrong model of the problem, and it sent me looking in the wrong place.
 
 The component benchmark had timed one model decoding one clip in isolation. Production traces measured the *whole pipeline* under real conditions: download, decode, a padded encoder window, language detection, transcription, agent turn, synthesis, delivery. The gap wasn't a hardware multiplier — it was everything the benchmark had left out, and two specific pieces of waste inside it. Component numbers do not compose into end-to-end numbers, and a single fudge factor will never bridge them.
 

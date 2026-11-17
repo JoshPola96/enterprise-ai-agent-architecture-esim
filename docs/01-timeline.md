@@ -30,7 +30,7 @@ gantt
     section Hardening
     Phase 5 Security under live traffic   :p5, 2026-04-01, 2026-06-30
     Phase 6 Observability                 :p6, 2026-04-01, 2026-07-31
-    F6S rank 5 AI company                 :milestone, m2, 2026-05-15, 0d
+    F6S rank 5 AI in Sheridan WY          :milestone, m2, 2026-05-15, 0d
     section Multimodal and measurement
     Phase 7 Voice and image               :p7, 2026-05-01, 2026-08-10
     Measurement round                     :p8, 2026-07-15, 2026-08-10
@@ -42,7 +42,7 @@ gantt
 | Oct 2025 | 2 · Production pivot | Collapse to a single agent on Gemini Flash and Qdrant — ~60% latency reduction |
 | Nov–Dec 2025 | 3 · Identity, memory, hardening | Cross-platform identity, intent preservation, circuit breakers, CI/CD |
 | Jan–Mar 2026 | 4 · Commerce | In-chat purchase, proactive notification pipeline · investor pitch, selected top 5 of 39 |
-| Q2 2026 | 5 · Security | Layered defence under live attack · F6S #5 AI company |
+| Q2 2026 | 5 · Security | Layered defence under live attack · F6S #5 AI company in Sheridan, WY |
 | Q2–Q3 2026 | 6 · Observability | Full metrics, logs, alerting as code, verified dashboards |
 | Q2–Q3 2026 | 7 · Multimodal | Self-hosted speech, native vision |
 | Q3 2026 | Measurement round | Measured resource model, 24-run model evaluation, prompt caching, auth verified against production |
@@ -99,7 +99,7 @@ The retrieval stack has its own story, because I worked on it from the very firs
 
 Embedding and query-vector caching came later, and for a reason worth recording: attackers ran high-volume "mill" traffic specifically to drive up token cost, and caching the embedding work blunted it. That is a recurring theme of this project — several defensive features were shaped by live abuse rather than anticipated in a design doc (see [Phase 5](#phase-5--security-under-live-fire-q2-2026)).
 
-This is the central lesson of the project, and I'll state it plainly: **architectural simplicity outperformed architectural sophistication.** The elegant design lost to the sophisticated one. I've stopped being surprised by that.
+This is the central lesson of the project, and I'll state it plainly: **architectural simplicity outperformed architectural sophistication.** The sophisticated design lost to the simple one. I've stopped being surprised by that.
 
 **It happened twice.** For several months I developed two versions of the agent in parallel — a single-node "workhorse" agent and a multi-node one — iterating on both at once: improving the same prompt set, finding and fixing the same bugs, and running both through the same complex test cases and scenarios so I could watch them handle identical situations side by side. The multi-node version was a six-node graph — a dedicated context-loading node, an agent node deciding what to call, a token-injection node, the tool executor, a separate post-login handler, and a distinct synthesizer node with its own LLM call converting tool results into the final reply. Two full model calls per turn, minimum: one to decide what to do, a second, separately-configured one to write the answer. The other was the lean single-agent loop that eventually won.
 
@@ -145,7 +145,7 @@ One adjacent pain point was worth solving with plain scripting rather than archi
 
 The lesson I'd draw from that stretch is about momentum, not auth. When a product earns a wave of interest, capitalise on it and stay agile — don't let a large speculative rework stall the very momentum you just won. Changes, tests, feedback, and design choices should be grounded in practicalities and agreed by everyone involved before the platform is rebuilt around them; the strongest solution is usually the elegant one that a few minor adaptations of the existing design can deliver, not the total rework that has to justify itself from scratch. You want the product to take off, not crash and burn while a redesign proves a point.
 
-The ordering in that last step is the subtle part, and I got it wrong first time. **Open the new login relay *before* generating the user-facing message**, not after. Otherwise the agent says *"I'll send you a login link"* and then has to produce one that doesn't exist yet. Resolve the fact, then let the model describe it — never the reverse.
+The ordering in the ladder's last step is the subtle part, and I got it wrong first time. **Open the new login relay *before* generating the user-facing message**, not after. Otherwise the agent says *"I'll send you a login link"* and then has to produce one that doesn't exist yet. Resolve the fact, then let the model describe it — never the reverse.
 
 The inverse principle mattered just as much: the agent is *led by* the API response, so it should be handed as much of that response as possible — especially on errors. A tool that fails with a specific message about a wrong parameter or a bad type lets the model self-correct on the next turn; an error that surfaces enough detail lets it choose a different UX path, recover, or adapt the journey rather than dead-end. I made a point of giving the LLM maximum information exactly where most systems hide it — in failures and raw responses — because that is what makes the model nuanced instead of brittle, and the answers personalised instead of canned. Put plainly: the API messages and responses returned to the agent have to be informative *for the agent*, and getting that right is a real game-changer for the UX and the overall experience.
 
@@ -500,7 +500,7 @@ https://github.com/user-attachments/assets/b35e122a-bc56-4eac-8132-d8da71cdfaf4
 
 <p align="center"><em>26 July (Telegram), 29 July (WhatsApp, production), then 3 August (Telegram): the three clips, unedited. Originals: <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/audio/tg-4868.ogg">tg-4868.ogg</a>, <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/audio/wa-1687.opus">wa-1687.opus</a>, <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/audio/tg-5028.ogg">tg-5028.ogg</a>. Sound on: the player starts muted.</em></p>
 
-Both models are lazy-loaded once per worker, run on an isolated thread pool with a concurrency semaphore so a burst of voice messages can't starve text requests, and are baked into the image at build time rather than pulled at runtime — for reasons the memory-ceiling section explains at some cost.
+Both models are lazy-loaded once per worker, run on an isolated thread pool with a concurrency semaphore so a burst of voice messages can't starve text requests, and are baked into the image at build time rather than pulled at runtime — for reasons [the memory-ceiling section](02-platform.md#operating-under-a-memory-ceiling) explains at some cost.
 
 **Status:** deployed to production. The first release ran voice round-trips well over target; the measurement round covered in [the next section](02-platform.md#round-two-what-production-revealed-that-the-benchmark-couldnt) brought the median from 24–28s down to **7.7s** (across the 8 voice traces in the 7-day production window). Public validation at scale is still ongoing — transcription quality varies across the language set, and synthesized output formatting is still being refined.
 

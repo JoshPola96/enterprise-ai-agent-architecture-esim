@@ -177,7 +177,7 @@ flowchart LR
     RR -. timeout .-> FB["Top-N un-reranked"]
 ```
 
-**The query-vector cache is namespaced by embedding model.** Changing the model invalidates every cached vector automatically instead of silently serving vectors from the wrong embedding space — a bug that would present as "retrieval got worse" with no error anywhere. The shared Redis write is fire-and-forget, so a slow cache can never add latency to a query that has already computed its vector. Episodic search adds two more fast paths: a per-user flag lets anyone with no stored conversations skip the vector store entirely, and a 60-second result cache absorbs repeat lookups within a session.
+**The query-vector cache is namespaced by embedding model.** Changing the model invalidates every cached vector automatically instead of silently serving vectors from the wrong embedding space — a bug that would present as "retrieval got worse" with no error anywhere. The shared Redis write is fire-and-forget, so a slow cache can never add latency to a query that has already computed its vector.
 
 ### Reranking, and why min-max not sigmoid
 
@@ -189,9 +189,9 @@ On reranker timeout the pipeline returns top-N un-reranked candidates rather tha
 
 ### Caching and indexing
 
-**Query embeddings are cached, not documents** — a two-tier design. An in-process LRU with TTL serves repeat and burst queries in microseconds with zero network I/O, including under deliberate flood patterns. Behind it, a Redis tier shared across all workers, so a miss in one worker's local cache can still hit. Episodic retrieval adds two more fast paths: a flag so users with no stored history skip the vector database entirely, and a short full-result cache absorbing repeat calls within a session.
+**Query embeddings are cached, not documents** — a two-tier design. An in-process LRU with TTL serves repeat and burst queries in microseconds with zero network I/O, including under deliberate flood patterns. Behind it, a Redis tier shared across all workers, so a miss in one worker's local cache can still hit. Episodic retrieval adds two more fast paths: a flag so users with no stored history skip the vector database entirely, and a 60-second full-result cache absorbing repeat calls within a session.
 
-**Markdown is chunked structurally**, split along its own heading hierarchy with the heading breadcrumb prepended into the chunk body — so section headings, the primary retrieval anchor for section-specific questions, are embedded into both vectors of every chunk. Only oversized sections get a second recursive split. Tabular sources are serialised to markdown tables for semantic chunking with a schema-summary chunk per sheet, falling back to row-wise chunking per file if serialisation fails.
+**Markdown is chunked structurally**, split along its own heading hierarchy with the heading breadcrumb prepended into the chunk body — so section headings, the primary retrieval anchor for section-specific questions, are embedded into both vectors of every chunk. Only oversized sections get a second recursive split.
 
 **Index initialisation is multi-worker safe** through three layers: a content hash over every source file's path, mtime, and size — size included specifically because bind mounts can drop mtime events; a *hash-scoped* completion flag rather than a static one, so changing any source file automatically invalidates it and re-triggers indexing; and leader election so exactly one worker rebuilds while the others poll, with a fallback check that surfaces an explicit error rather than hanging silently.
 
@@ -218,9 +218,7 @@ Sessions and guest accounts are cleaned up on their own schedule:
 | **Session cleanup, phase 1** | Abandoned logins — a code was sent, never completed, and has expired |
 | **Session cleanup, phase 2** | Soft-deactivates sessions more than 24 hours past expiry |
 | **Session cleanup, phase 3** | Hard-deletes sessions inactive for more than seven days |
-| **Ghost-account cleanup** | Contact channels of guests who never authenticated and went idle for 72 hours, then any guest user left with no channels |
-
-A separate job removes *ghost accounts* — unverified contact channels abandoned mid-signup, and any guest user left with no remaining channels — so half-finished registrations don't accumulate as orphans.
+| **Ghost-account cleanup** | Contact channels of guests who never authenticated and went idle for 72 hours, then any guest user left with no channels, so half-finished registrations don't accumulate as orphans |
 
 **And a caution I'd hand to anyone writing a destructive background job.** The ghost-account cleanup requires *four independent predicates* to agree that an owner never authenticated, and that redundancy is not defensive over-engineering. There is an obvious one-column shortcut — a "natively verified" flag that looks exactly like the right filter. It is set only by one platform's contact-share flow, which means every user on the *other* channel is permanently false on it. A cleanup keyed on that single column deletes real, authenticated, paying customers, and does so quietly, on a schedule, at night.
 
