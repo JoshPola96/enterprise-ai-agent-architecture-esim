@@ -345,7 +345,7 @@ Two $1.63 plans don't fit in $1.95. I asked how, and asked for the answer in voi
 
 https://github.com/user-attachments/assets/8c395637-858e-4850-a942-791f55397244
 
-<p align="center"><em>The voice note as recorded, unedited. Original: <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/audio/tg-4810.ogg">tg-4810.ogg</a>. Sound on: the player starts muted.</em></p>
+<p align="center"><em>The agent's 24-second reply, unedited: "You only had enough in your balance for one plan, not two." Original: <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/audio/tg-4810.ogg">tg-4810.ogg</a>. Sound on: the player starts muted.</em></p>
 
 Its next offer settles the question from the ledger side:
 
