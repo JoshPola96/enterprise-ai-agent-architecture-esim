@@ -35,7 +35,7 @@ It closed a security hole too, which I didn't anticipate: the abuse guards now s
 <p align="center">
   <img src="images/broadcast_system_ss.jpeg" alt="WhatsApp screenshot of a broadcast health-check message delivered through the same notification pipeline as any other proactive event" width="420"/>
   <br/>
-  <em>A broadcast landing through the ordinary notification path — same pipeline, same guards, nothing special-cased.</em>
+  <em>The production number, 16–17 June 2026 (WhatsApp lines 1593–1606). A broadcast landing through the ordinary notification path — same pipeline, same guards, nothing special-cased. The login code at the top is boxed.</em>
 </p>
 
 **Localisation.** System-generated messaging — verification prompts, phone-share requests, rate-limit and suspension notices, OTP fallback text, and the entire human-verification web page — ships in **ten languages**: English, Turkish, German, Spanish, French, Hindi, Malayalam, Portuguese, Italian, and Arabic, the last with right-to-left layout. Locale resolves from the Telegram client's declared language, the WhatsApp number's country prefix, or the browser's accept-language header, depending on where the user is being addressed.

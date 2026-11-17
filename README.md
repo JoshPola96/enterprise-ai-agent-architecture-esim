@@ -37,7 +37,7 @@ When I started this work in July 2025, transaction-capable autonomous agents —
 
 The public timeline bears that out. OpenAI's in-chat checkout, Instant Checkout, launched on 29 September 2025. Google unveiled its Universal Commerce Protocol for agentic shopping on 11 January 2026. Through the first quarter of 2026, this agent went live provisioning eSIMs and taking payments from real customers inside WhatsApp and Telegram.
 
-The more interesting fact isn't "early". OpenAI wound Instant Checkout down in March 2026, around five months after launch: only about a dozen Shopify merchants had gone live, and Walmart reported that purchases completed inside ChatGPT converted at roughly a third of the rate of click-through. This system is a different scale and a different vertical — a focused eSIM concierge, not a general marketplace — so the comparison isn't "this beat that". It's narrower and more useful. A purchase journey that starts, confirms and completes inside the conversation — wallet payments settling in the thread, card payments through a hosted checkout link, the activation code delivered back into the chat — was still running here at handover in August 2026 — having weathered a steady stream of forced backend changes that repeatedly broke it and had to be re-integrated, along with the components around it — while a far larger implementation of a similar pattern had already been walked back.
+The more interesting fact isn't "early". OpenAI wound Instant Checkout down in March 2026, around five months after launch: only about a dozen Shopify merchants had gone live, and Walmart reported that purchases completed inside ChatGPT converted at roughly a third of the rate of click-through. This system is a different scale and a different vertical — a focused eSIM concierge, not a general marketplace — so the comparison isn't "this beat that". It's narrower and more useful. A purchase journey that starts, confirms and completes inside the conversation — wallet payments settling in the thread, card payments through a hosted checkout link, the activation code delivered back into the chat — was still running here at handover in August 2026, re-integrated through a steady stream of backend changes along the way, while a far larger implementation of a similar pattern had already been walked back.
 
 That gap is why this document exists. The core problems here — exactly-once proactive delivery, cross-platform identity resolution, intent preservation across authentication boundaries, prompt-injection defence inside the request path — had to be solved from first principles, because there was no reference implementation to borrow from. Some of it would be built differently today with tooling that now exists. That's the point. These are field notes from before the playbook.
 
@@ -65,7 +65,8 @@ A production AI agent handling the complete eSIM customer lifecycle — discover
 | **Languages** | Agent mirrors the user's language · system text in 10 locales incl. RTL · speech voice map covers 32 languages |
 | **Hardware** | One 8 vCPU CPU-only VPS — no GPU, anywhere |
 | **Running cost** | **~$11–45/month** all-in at handover, against $300–500+ for a managed-cloud equivalent — trending upward since, as both the LLM provider and the VPS host have raised or signalled price rises |
-| **Recognition** | **#5 AI company on [F6S](https://www.f6s.com/companies/artificial-intelligence/united-states/wyoming/sheridan/co)** (May 2026, ranked across 2M+ startups) · **Top 5 of 39** at an investor demo day |
+| **Recognition** | **Top 5 of 39** at an investor demo day · **#5** in [F6S's AI company ranking for Sheridan, Wyoming](https://www.f6s.com/companies/artificial-intelligence/united-states/wyoming/sheridan/co), where the company is registered (May 2026) |
+| **On the record** | **2,385** test messages exported from Telegram and WhatsApp, platform-timestamped, the wallet balance agreeing to the cent across both · native screenshots and original voice notes, hashed · [the exhibits](#from-the-test-logs) |
 
 **The model set, all on CPU:** three INT8 ONNX models in the request path — Meta's Llama Prompt Guard 2 for injection classification, a multilingual NER model for PII detection, and a cross-encoder reranker — plus self-hosted speech (faster-whisper at int8 and Piper TTS) and an offline-trained XGBoost risk classifier exported to ONNX.
 
@@ -75,9 +76,9 @@ A production AI agent handling the complete eSIM customer lifecycle — discover
 <p align="center">
   <img src="docs/images/latest_login_flow_ss1.jpeg" alt="WhatsApp screenshot of the login-relay authentication flow, including a fresh link issued on request and the welcome offer after login" width="430"/>
   &nbsp;&nbsp;
-  <img src="docs/images/purchase_flow_exolanation_ss.jpeg" alt="The agent explaining its own purchase-flow logic in plain language, matching the documented consultant behaviour" width="250"/>
+  <img src="docs/images/purchase_flow_explanation_ss.jpeg" alt="The agent explaining its own purchase-flow logic in plain language, matching the documented consultant behaviour" width="250"/>
 </p>
-<p align="center"><em>Not staged: the live operator dashboard, the login relay on the production domain, and the agent describing its own design when asked. Dashboard panels reflect their own time windows; the measured 7-day figures are in <a href="docs/06-performance.md">Performance</a>.</em></p>
+<p align="center"><em>Not staged: the live operator dashboard; the login relay on the production domain, on a second test account (link tokens, code and eSIM identifiers boxed); and the agent describing its own design when asked, on the production number on 13 March 2026 (WhatsApp lines 690–701). Dashboard panels reflect their own time windows; the measured 7-day figures are in <a href="docs/06-performance.md">Performance</a>.</em></p>
 
 ---
 
@@ -208,21 +209,83 @@ The patterns from this project I'd reuse anywhere, each documented in depth.
 | **Retrieval on demand, not on every turn** | Don't pay reranking latency on greetings and balance checks | [05](docs/05-architecture.md#retrieval-architecture) |
 | **Size to the recycle peak** | Measure shared vs per-worker memory; plan for N+1 workers during restarts | [02](docs/02-platform.md#the-measured-memory-model) |
 | **Crawlers consume single-use links** | Serve link-preview bots a decoy before they spend the user's verification | [09](docs/09-security-architecture.md#5-the-human-gate) |
+| **Lift a block everywhere it was set** | An unblock that didn't reach every store the block lived in kept it answering every message | [09](docs/09-security-architecture.md#on-the-record-the-agent-flagged-me) |
 | **Silence for adversaries, clarity for customers** | One notice a day when suspended; nothing at all when banned | [09](docs/09-security-architecture.md#6-the-behavioural-gate--userguard) |
 | **Deny the model the label's inputs** | A risk classifier trained on the columns its labels come from learns nothing — and scores brilliantly | [09](docs/09-security-architecture.md#11-ml-risk-scoring) |
 | **Ask your dashboards a question** | Executing every panel's query found 48 of 61 targets silently empty | [01](docs/01-timeline.md#the-dashboards-were-lying-and-i-only-found-out-by-asking-them) |
+| **A confirmation is a fact, not a sentence** | The agent confirmed a second purchase the wallet couldn't pay for; the ledger was right and the words were wrong | [01](docs/01-timeline.md#from-the-test-log-the-money-and-the-words) |
+| **What the model can see, it can say** | Deliver secrets beside the agent, never through it — it quoted a verification code back three days later | [↓](#case-study-the-verification-code-the-agent-repeated) |
+
+---
+
+## From the Test Logs
+
+The rest of this document is my account. This section is the record underneath it: my own test conversations with the agent, exported from the platforms themselves — **1,777 messages** with the Telegram development bot (May–August 2026) and **608** with the production WhatsApp number (November 2025 – September 2026). Every message carries the platform's own timestamp. The wallet balance agrees to the cent across the two channels: **$35.22** on the development bot on 18 July is what the production number speaks on 29 July, and **$33.72** after a purchase on the development bot on 2 August is the balance the production number reports on 30 August. Several of the fixes described in the case study appear in the logs as dated before-and-after pairs.
+
+Screenshots are taken in the apps themselves, with solid boxes over codes, contact details and eSIM identifiers, and text quoted from them is verbatim. References point into the exports: `#4808` is a Telegram message id, and "WhatsApp line 1777" is a line of the exported chat. Voice notes are the original files, byte for byte, in [`docs/test-log/audio`](docs/test-log/audio), each named for its message: `tg-4810` is Telegram #4810, `wa-1808` WhatsApp line 1808. [`SHA256SUMS`](docs/test-log/SHA256SUMS) binds all of it to what I hold: the full exports, every audio file, and each screenshot's **unredacted original**, so the boxes can be checked against the original later without revealing what is under them. In `docs/test-log`, `sha256sum -c --ignore-missing SHA256SUMS` checks whatever is present. The exports: Telegram `ec95789070d4000a3b60db6e3519d0fadea685ef4280d5347c8bf7505ebc7227`, WhatsApp `46b45232dcd9e11d8ce2713e91c0e651278f1ba4e1e6d05db0023006c56ac9ce`.
+
+| Exhibit | Recorded | What it shows | Evidence | Where |
+|---|---|---|---|---|
+| **Two confirmations, one debit** | 24 Jul 2026 | A $1.63 plan "bought" twice from a $1.95 balance, the agent's own voice note admitting it, and the clean purchase nine days later | screenshots · voice | [01](docs/01-timeline.md#from-the-test-log-the-money-and-the-words) |
+| **The split payment that half-ran** | 17 Jul 2026 | Wallet leg taken, card leg failed, nothing rolled back — fixed the same afternoon | screenshot | [01](docs/01-timeline.md#from-the-test-log-the-money-and-the-words) |
+| **The human gate** | 26 May → 3 Aug 2026 | The decoy preview card, the verification link and the held message answered, on the production number and on Telegram with its contact share, and the verification page itself | screenshots | [09](docs/09-security-architecture.md#5-the-human-gate) |
+| **Flagged by its own agent** | 24–25 Jul 2026 | My photo of the operator dashboard flagged within a minute, and a block that outlived its unblock | screenshot | [09](docs/09-security-architecture.md#on-the-record-the-agent-flagged-me) |
+| **"I wasn't able to transcribe it"** | 20 Jul → 2 Aug 2026 | A clear six-second question refused as unintelligible, then the same kind of question answered | voice | [01](docs/01-timeline.md#phase-7--multimodal-q2q3-2026) |
+| **"$35.22 Sparkles"** | 26 Jul → 3 Aug 2026 | The ✨ in a reply read aloud by its name, on both channels, then gone | voice | [01](docs/01-timeline.md#phase-7--multimodal-q2q3-2026) |
+| **Hindi in an English voice** | 3 Aug 2026 | The speech bug in Known Limitations, as first heard | voice | [07](docs/07-reflections.md#known-limitations) |
+| **"Letter 1E37"** | 30 Aug 2026 | The same bug on the production number, with accented letters spoken as Unicode code points | voice | [07](docs/07-reflections.md#known-limitations) |
+| **The code the agent repeated** | 23 → 26 May 2026 | A verification code quoted back three days after delivery | screenshot · text | [↓](#case-study-the-verification-code-the-agent-repeated) |
+
+<p align="center">
+  <img src="docs/test-log/phantom_purchase_chat.png" alt="Telegram, 24 July 2026: two 'Funds locked in' confirmations for the same $1.63 plan from a $1.95 balance, my question how, and the agent's 24-second voice reply" width="300"/>
+  <a href="docs/test-log/phantom_purchase.mp4?raw=true"><img src="docs/test-log/phantom_purchase.png" alt="The same 24 July exchange as a card: my question and the agent's voice note, which admits only one purchase was possible" width="460"/></a>
+  <br/>
+  <em>24 July 2026, 00:44–00:49, in the Telegram app and as audio. Click the card to play the agent's voice note as recorded. The full exchange, and why the ledger was right while the words were wrong, is in <a href="docs/01-timeline.md#from-the-test-log-the-money-and-the-words">Phase 4</a>.</em>
+</p>
+
+### Case study: the verification code the agent repeated
+
+On 23 May 2026 the production agent's welcome message carried a one-time password in its text. Three days later I said hello, and the agent answered:
+
+> **Esimtime Agent** · WhatsApp, 26 May 2026, 17:38 — Hello again! 👋 Were you able to verify your account using the OTP I provided earlier (`[code removed]`) and the link in your email? Let me know if you need any help with that, or if you're ready to explore some plans!
+
+<p align="center">
+  <img src="docs/test-log/otp_repeated_chat.jpg" alt="WhatsApp, production number: the 23 May welcome message carrying a one-time password, boxed; then on 26 May two replies that quote the same code back, boxed" width="360"/>
+  <br/>
+  <em>The production number in the WhatsApp app: the code delivered in the welcome text on 23 May at 00:22 (line 1025), then quoted back on 26 May at 17:38 and 18:26 (lines 1039 and 1041). The code is boxed in all three places; the hash of the unredacted original is in <code>SHA256SUMS</code>.</em>
+</p>
+
+It was the same code, character for character, and the agent quoted it again at 18:26. Nothing had malfunctioned in the usual sense: the model was being helpful with what was in its context, and the code was in its context because the message that delivered it had gone through the conversation. **What the model can see, it can say** — in a reply, a trace or a memory summary. Asking it not to is a prompt rule, and a prompt rule is not a control.
+
+The fix moved the code out of the model's mouth. From 29 May each code arrives as a message of its own, from the same number but not from the model:
+
+> **Esimtime Agent** · WhatsApp, 29 May 2026, 20:48 — *`[code removed]`* is your verification code. For your security, do not share this code.
+
+That is WhatsApp's authentication template: fixed wording that Meta approves and the model never composes, sent through the [notification path](docs/01-timeline.md#phase-4--commerce--proactive-engagement-q1-2026) rather than the agent loop. The agent only asks the user to send the code back, and from then on the production log shows it asking for codes, never quoting them.
+
+The stricter version was never built. In the final login relay the user still pastes an emailed code back into the chat ([Phase 3](docs/01-timeline.md#phase-3--identity-memory-hardening-novdec-2025)); it is scrubbed before logs and long-term memory ([§12](docs/09-security-architecture.md#12-data-protection)), but it sits in the context of the turn that verifies it. The next step is to take the code on the relay's own web form, out of band, so that it never reaches the model. MCP's URL-mode elicitation ([SEP-1036](https://modelcontextprotocol.io/community/seps/1036-url-mode-elicitation-for-secure-out-of-band-intera)) standardises exactly this for agent tooling: credentials go to a URL, never through the client.
 
 ---
 
 ## Recognition
 
-**F6S ranking — May 2026.** Reached **#5 AI company** on F6S, a platform that ranks across a base of 2M+ startups globally — [listing](https://www.f6s.com/companies/artificial-intelligence/united-states/wyoming/sheridan/co). F6S reshared the announcement to its own audience.
+**F6S ranking — May 2026.** Ranked **#5** in F6S's monthly list of AI companies in Sheridan, Wyoming, where the company is registered. The [list](https://www.f6s.com/companies/artificial-intelligence/united-states/wyoming/sheridan/co) re-ranks every month, so here is [a snapshot from the time](https://www.instagram.com/p/DZIYxqtErg8/). F6S reshared the announcement to its own audience.
 
 **Investor demo day — March 2026.** The company presented at a competitive startup demo day and placed **Top 5 of 39**, with the autonomous agent highlighted as the key product differentiator.
 
-**Founder's public acknowledgement.** On the F6S announcement, the company's founder and CEO publicly thanked the team specifically for the work to keep the platform secure, and — with characteristic humour — thanked the attackers whose constant probing amounted to a continuous free penetration test that made the system's security stronger. That the *live-attack-hardening* story documented in the [security deep dive](docs/09-security-architecture.md) is corroborated in the founder's own public words, rather than only my account, is the part I'd point a sceptical reader to. Beyond security, the whole system — the agent, its flows, the retrieval layer, and the shipped features — was publicly exercised and verified as working by the company, whose feedback let me improve, develop and correct faster; that tight loop was itself a real boost to development.
+**The company's own team slide.** From the company's presentation deck, shown uncropped as I shared it in my [post of 7 April 2026](https://www.linkedin.com/posts/josh33-peter10_ai-startups-engineering-ugcPost-7447292696014016513-Jj4F/): the founder, me as AI/ML, and two engineers on backend and frontend — the split described in [My Role](#my-role).
 
-**Production track record.** In production on two messaging channels from late 2025, with in-chat commerce live from Q1 2026 through to handover.
+<p align="center">
+  <img src="docs/images/team_slide_2026-04.jpg" alt="Slide 13 of the company's presentation deck, titled Our Team: the founder, Joshua P. Polaprayil as AI/ML, a backend engineer and a frontend engineer" width="640"/>
+</p>
+
+**Founder's public acknowledgement — June 2026.** On my [F6S announcement](https://www.linkedin.com/posts/josh33-peter10_esimtime-aiagents-esim-share-7467970557624360960-LKuY/), the company's founder [commented](https://www.linkedin.com/feed/update/urn:li:activity:7467970560543797249/?dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287468040954906673153%2Curn%3Ali%3Aactivity%3A7467970560543797249%29):
+
+> At this stage, I feel it is my duty to thank my teammates Joshua Peter Polaprayil, Opeoluwa Adeyeri, and Zain Ali for their successful work, professional solutions, and especially for their efforts to keep our system secure.
+
+The comment goes on, with characteristic humour, to thank "our dear hackers :)" for "a free penetration testing experience" that made the system's security stronger. The live-attack hardening in the [security deep dive](docs/09-security-architecture.md) is otherwise my account; this is the founder's, in public, and it is what I'd point a sceptical reader to. Beyond security, the company exercised the whole system — the agent, its flows, the retrieval layer and the shipped features — and its feedback gave me a fast loop for finding and fixing problems.
+
+**Production track record.** In production on two messaging channels from late 2025, with in-chat commerce live from Q1 2026 through to handover. My own test log with the production WhatsApp number starts on 16 November 2025 ([From the Test Logs](#from-the-test-logs)).
 
 ---
 
@@ -242,7 +305,7 @@ I owned the full technical surface of the AI platform — as sole AI engineer an
 
 ## Contact
 
-**Joshua Peter Polaprayil**
+**Joshua Peter Polaprayil**\
 Full-Stack AI Engineer · MSc Big Data Analytics & AI (ATU, Ireland)
 
 - **LinkedIn** — [linkedin.com/in/josh33-peter10](https://www.linkedin.com/in/josh33-peter10/)
@@ -255,13 +318,13 @@ Open to AI/ML and full-stack AI engineering roles. If you're building production
 
 ## Repository Note
 
-This repository contains **architectural documentation and engineering narrative only**. It includes no source code, credentials, customer data or confidential business data. Company and product names appear solely as factual work history. The security design is documented in depth deliberately, as a contribution to how conversational agents can be defended.
+This repository contains **architectural documentation and engineering narrative only**. It includes no source code, credentials, customer data or confidential business data. The test-log exhibits are my own conversations with the agent, with codes, contact details and eSIM identifiers removed. Company and product names appear solely as factual work history. The security design is documented in depth deliberately, as a contribution to how conversational agents can be defended.
 
 **MIT License** — see [LICENSE](LICENSE).
 
 ---
 
-**Last updated:** September 2026
+**Last updated:** November 2026\
 **Status:** Handed over August 2026 — documented as of that date
 
 <p align="center">

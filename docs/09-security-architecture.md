@@ -180,9 +180,28 @@ sequenceDiagram
     Agent-->>User: Reply to what they originally asked
 ```
 
+<p align="center">
+  <img src="test-log/human_gate_whatsapp_chat.jpg" alt="WhatsApp, production number, 27 May 2026: my 'hello' is held behind a 'Secure Verification' link protected by Cloudflare, token boxed; a minute later the held hello is answered with the agent's welcome" width="320"/>
+  <br/>
+  <em>The production number, 27 May 2026, 02:43–02:44 (WhatsApp lines 1088–1094): the held "hello", the verification link (token boxed), and a minute later the answer to the held message. WhatsApp supplies the phone number itself, so there is no contact share. The first gate link in my production log is from three hours earlier: 26 May, 23:50 (line 1045), shown under detail 1 below.</em>
+</p>
+
+<p align="center">
+  <img src="test-log/human_gate_chat.png" alt="Telegram, 3 August 2026: my 'hlo' is held behind a Cloudflare-protected verification link; verification completes within the minute, the bot asks for a one-tap contact share, I share my contact card, and the held message is answered with a welcome" width="360"/>
+  <img src="test-log/verification_page.jpg" alt="The verification page after the challenge: 'All Set! Your account is secure. Returning you to the app... Verified! You can safely close this window. Return to Chat', protected by Cloudflare" width="300"/>
+  <br/>
+  <em>Left: the gate on Telegram, 3 August 2026, 01:28–01:32 (#5020–5028). The held "hlo", the verification link (boxed), verification complete within the minute, the contact share (number boxed), then the answer to the held message. Right: the page the challenge returns to, as I sent it to the bot on 27 July (#4895).</em>
+</p>
+
 ### Six details that made it work
 
 **1. Link-preview crawlers get a decoy.** Send a verification link into a chat and the platform immediately fetches it to build a preview. Without special handling, that automated fetch consumes the user's single-use verification attempt before they've even read the message — so they tap a link that is already spent. The handler matches the user-agent against WhatsApp, Telegram, Facebook, Twitter, Slack and Apple crawlers and serves them a static Open Graph card. Delivering a single-use flow *over* a link-unfurling medium means designing for the medium fetching it first.
+
+<p align="center">
+  <img src="test-log/human_gate_first_night_chat.jpg" alt="WhatsApp, production number, 26–27 May 2026: three verification links, each under a link-preview card titled 'Esimtime · Verify' or 'Verify · Esimtime', the wording changing from '1-tap verification' to 'human verification, protected by Cloudflare'; tokens boxed" width="300"/>
+  <br/>
+  <em>The gate's first night on the production number, 26 May 23:49 to 27 May 00:18 (WhatsApp lines 1044–1057). The preview card above each link is what WhatsApp's crawler was served, not the verification page. Its title and the message wording change through the night, to "Secure Verification · Esimtime" by 02:43 (above). Tokens boxed.</em>
+</p>
 
 **2. Invisible to genuine users.** Turnstile runs in interaction-only mode, so users on clean IPs see nothing and the widget resolves silently. Only suspicious sessions see a visible challenge. Verification is idempotent — a still-valid pending link is reused rather than a new one minted.
 
@@ -416,6 +435,18 @@ flowchart LR
 
 Crossing the hard threshold applies a real block in the behavioural gate, not merely a database flag. The model is a sensor with teeth, not a reporter.
 
+### On the record: the agent flagged me
+
+The record has this layer firing on the person who built it. On 24 July 2026 at 05:01 I sent the development bot a photo of the live operator dashboard. An ordinary user has no business holding internal operations telemetry, and the agent treated it that way: within a minute the session was blocked (#4849–4851).
+
+<p align="center">
+  <img src="test-log/manual_verification_chat.png" alt="Telegram, 24–25 July 2026: a greeting and a voice note answered normally; my dashboard photo, removed here; then the notice 'For your security, this session requires manual verification. Please contact' and a boxed address, in reply to every message that day, including after I write that I was unblocked; on 25 July a voice note is answered normally" width="420"/>
+  <br/>
+  <em>Telegram, 24 July 04:58 to 25 July 23:57 (#4845–4864). The dashboard photo is removed and the support address boxed. The voice note at 14:26 (#4859) is the same notice, spoken.</em>
+</p>
+
+The block then outlived its unblock. I lifted it on the server with the command-line Security Hub of [§14](#14-operator-tooling), and the notice kept coming: six more times that afternoon, once as a voice note. This was not the suspension of [§6](#suspended-and-banned-are-treated-asymmetrically-on-purpose), which notifies once a day, but the admin block list, which is checked at login and lives in the cache and, behind it, the database. Admin blocks are normally set from the Grafana admin panel; the command-line unblock did not propagate through every level, so the login check went on reading a block that had been lifted elsewhere. I fixed the Hub to clear every level and cleared the block with it; my next message, on 25 July at 23:57, went through normally. The rule is the one [§5](#verification-decays-on-purpose) already applies to challenge revocation: state recorded in several places is cleared in all of them, or it has not been cleared. The reliable way to keep that true is one function for every block and unblock, whether the panel, a script or the agent calls it.
+
 ---
 
 ## 11. ML Risk Scoring
@@ -523,6 +554,8 @@ Two protections exist for the same reason:
 - **The customer-ID pattern requires the word "customer".** An earlier version accepted a bare `id`, which also matched `plan id 100234` — redacting exactly the product references purchase-history recall needs.
 
 **Degraded mode is not no-mode.** If scrubbing is called before the pipeline finishes initialising, it falls back to regex email redaction rather than passing text through untouched. Partial protection beats none on the path where a leak is permanent.
+
+**Scrubbing guards what is stored, not what the model sees.** The pipeline cleans text on its way to logs and memory; it does nothing for a secret already in the live conversation. The production log has the case — the agent quoting a verification code back three days after delivering it — written up in the [README](../README.md#case-study-the-verification-code-the-agent-repeated). Secrets are kept from the model by routing them around it, not by redacting them afterwards.
 
 ### The threshold bug worth remembering
 

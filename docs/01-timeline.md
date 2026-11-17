@@ -149,18 +149,18 @@ The ordering in that last step is the subtle part, and I got it wrong first time
 
 The inverse principle mattered just as much: the agent is *led by* the API response, so it should be handed as much of that response as possible — especially on errors. A tool that fails with a specific message about a wrong parameter or a bad type lets the model self-correct on the next turn; an error that surfaces enough detail lets it choose a different UX path, recover, or adapt the journey rather than dead-end. I made a point of giving the LLM maximum information exactly where most systems hide it — in failures and raw responses — because that is what makes the model nuanced instead of brittle, and the answers personalised instead of canned. Put plainly: the API messages and responses returned to the agent have to be informative *for the agent*, and getting that right is a real game-changer for the UX and the overall experience.
 
-**For context, an earlier design.** Authentication was rebuilt three times across the engagement — credentials-in-chat, then OTP-in-chat, then the browser-based relay — and each redesign meant rebuilding the agent-side integration from scratch, often adapting to a backend-side change discovered by hitting it in production rather than by advance notice. That churn is itself the argument for the defensive posture the rest of this case study takes: version the observed contract, verify against the wire, and keep the agent's own layer resilient to an upstream that moves. Before the relay existed, the agent asked for email, phone, and (briefly) a password directly in the chat thread — functional, and exactly the trust problem described above. Shown here with a fabricated test identity, end to end through to a real LPA activation code, purely to illustrate what the current relay replaced:
+**For context, an earlier design.** Authentication was rebuilt three times across the engagement — credentials-in-chat, then OTP-in-chat, then the browser-based relay — and each redesign meant rebuilding the agent-side integration from scratch, often adapting to a backend-side change discovered by hitting it in production rather than by advance notice. That churn is itself the argument for the defensive posture the rest of this case study takes: version the observed contract, verify against the wire, and keep the agent's own layer resilient to an upstream that moves. Before the relay, which reached my test log in late July 2026, the agent asked for email, phone, and (briefly) a password directly in the chat thread — functional, and exactly the trust problem described above. Shown here with a fabricated test identity, end to end through to a real LPA activation code, purely to illustrate what the current relay replaced:
 
 <p align="center">
-  <img src="images/outdated_password_login_flow_automatic_trial_provisioned_ss.jpeg" alt="An earlier, superseded auth design asking for email, phone, and password directly in chat, using a fabricated test identity, through to a real free-trial LPA activation code" width="420"/>
+  <img src="images/outdated_password_login_flow_automatic_trial_provisioned_ss.jpeg" alt="An earlier, superseded auth design asking for email, phone, and password directly in chat, using a fabricated test identity, through to a real free-trial LPA activation code, boxed" width="420"/>
   <br/>
-  <em>Superseded design, kept for contrast — not the current flow. Test identity throughout.</em>
+  <em>Superseded design, kept for contrast — not the current flow. Test identity throughout; its email, password, login code and activation code are boxed.</em>
 </p>
 
 <p align="center">
-  <img src="images/voice_login_ss.jpeg" alt="The same earlier auth design over voice — credentials typed, OTP confirmed by voice note, account balance read back in a spoken reply" width="420"/>
+  <img src="images/voice_login_ss.jpeg" alt="The same earlier auth design over voice — email and phone typed (boxed), the code confirmed by voice note, the account balance read back in a spoken reply" width="420"/>
   <br/>
-  <em>Same superseded design, over voice. The credentials-in-chat step is exactly what the relay above exists to remove.</em>
+  <em>18 July 2026, 20:26–20:32 (#4646–4654). Same superseded design, over voice; email and phone boxed, and the voice note that speaks the code is not published. The credentials-in-chat step is exactly what the relay above exists to remove.</em>
 </p>
 
 Throughout, the original failed request stays queued as a pending intent, so whichever rung of the ladder the user comes back on, their request executes automatically.
@@ -168,7 +168,7 @@ Throughout, the original failed request stays queued as a pending intent, so whi
 <p align="center">
   <img src="images/latest_login_flow_ss_2.jpeg" alt="WhatsApp screenshot showing an expired login link automatically replaced with a fresh one on the real esimtime.com domain, followed by a successful login" width="320"/>
   <br/>
-  <em>The relay in practice — an expired link is handled by issuing a fresh one, not by leaving the user stuck.</em>
+  <em>The production number, 30 August 2026, 20:47–20:49 (WhatsApp lines 1757–1771). The relay in practice — an expired link is handled by issuing a fresh one, not by leaving the user stuck. Link token and code boxed. The $33.72 is the balance the development bot reported after its 2 August purchase, <a href="#from-the-test-log-the-money-and-the-words">below</a>.</em>
 </p>
 
 **Interrupted messages have to survive, with their modality intact.** When a user is stopped mid-request — by a human-verification challenge, a contact-share prompt, an expired session — whatever they were trying to say is held and replayed afterwards. Two details took production to get right:
@@ -212,7 +212,7 @@ Card payments return a checkout URL through a dedicated structured field rather 
 <p align="center">
   <img src="images/purchase_test_ss1.jpeg" alt="A live Stripe checkout session alongside a test probing a split payment across wallet balance and card in the same purchase" width="480"/>
   <br/>
-  <em>Edge-case probing during testing — a split balance-and-card payment on a single purchase, which sits outside the two documented payment paths. Included as an honest record of what got tried, not a claim about what the outcome was.</em>
+  <em>17 July 2026, 15:30–15:35 (#4574–4581 in the test log): two balance purchases that the ledger confirms ($13.48 before, $10.22 after), then a request to split a third. The agent declines, correctly — a split spends the balance first and charges the card only for the shortfall. What happened when there was a shortfall is twenty minutes further down the same log, <a href="#from-the-test-log-the-money-and-the-words">below</a>.</em>
 </p>
 
 **The hardest problem: proactive delivery.**
@@ -290,10 +290,83 @@ Webhook ingest, measured under load on the bench: **100% delivery, median 5ms, p
 <p align="center">
   <img src="images/free_trial_offer_gated_ss.png" alt="The agent declining a second free-trial request from an account that already claimed one, and offering to show the existing trial instead" width="480"/>
   <br/>
-  <em>The anti-abuse gate on the free trial, working as designed: one per account, enforced, not just documented. The login prompt in the reply is from the earlier, credentials-in-chat design that the login relay later replaced.</em>
+  <em>19 April 2026, on the test account created above. The anti-abuse gate on the free trial, working as designed: one per account, enforced, not just documented. The login prompt in the reply is from the earlier, credentials-in-chat design that the login relay later replaced.</em>
 </p>
 
 The uncomfortable truth from this phase: the genuinely hard part of "AI commerce" was almost entirely distributed systems work. The model was the easy component. Delivery guarantees, idempotency, and failure semantics were where the difficulty lived.
+
+### From the test log: the money and the words
+
+Two exchanges from my Telegram testing, a week apart, show the two ways an in-chat payment goes wrong, and which layer each one lives in.
+
+**17 July: the split that half-ran.** Twenty minutes after the screenshot above, a $52.00 plan against a $10.22 balance, so a real split:
+
+<p align="center">
+  <img src="test-log/split_payment_chat.png" alt="Telegram, 17 July 2026: the agent reports that $10.22 was deducted from the balance while the card leg of a split payment failed, then that the balance is $0.00 with $52.00 still due, then that the split cannot be processed; I reply that I fixed the backend" width="420"/>
+  <br/>
+  <em>17 July 2026, 15:55–16:24 (#4588–4593), in the Telegram app. eSIM identifiers boxed.</em>
+</p>
+
+<details>
+<summary>Transcript</summary>
+
+> **#4587 Agent** · 15:55 — … With split payment, $10.22 will be deducted from your balance, and the remaining $41.78 will be charged to your card. …
+>
+> **#4590 Agent** · 15:56 — … While your balance of $10.22 was deducted, the remaining $41.78 could not be charged to your card at this moment. 💳 …
+>
+> **#4591 Agent** · 16:00 — … Your previous balance of $10.22 has been used, and your current balance is now $0.00. The remaining $52.00 still needs to be paid. …
+
+</details>
+
+The wallet leg committed, the card leg failed, and nothing rolled back: $10.22 had left the wallet without paying for anything. That is the classic partial failure of a multi-leg payment, and the fix has a standard shape: **reserve, then capture every leg or release every leg** — a saga with a compensating step. My fix went in at 16:24 (#4593), and from the outside the log shows that shape afterwards: the wallet share, $35.22 by then and applied at 17:36 to a card checkout for a Europe plan (#4597), is held while the checkout is open (balance $0.00 at #4599, 17:40) and is back by 00:10 the next morning ($35.22 at #4635), with the checkout unpaid.
+
+**24 July: two confirmations, one debit.** The same plan as the 17 July purchases, on my second test account, against its $1.95 balance:
+
+<p align="center">
+  <img src="test-log/phantom_purchase_chat.png" alt="Telegram, 24 July 2026: two 'Funds locked in' confirmations for the same $1.63 plan from a $1.95 balance, my question how, the agent's 24-second voice reply, and a card checkout for the plan" width="420"/>
+  <br/>
+  <em>24 July 2026, 00:44–00:49 (#4801–4812), in the Telegram app. The eSIM identifier is boxed.</em>
+</p>
+
+<details>
+<summary>Transcript</summary>
+
+> **#4804 Me** · 00:44 — lets buy this, use balance.
+>
+> **#4805 Agent** · 00:45 — Funds locked in 🔒<br/>Your Türkiye 1GB - 1 Day plan has been successfully added to your existing eSIM using your account balance. You're all set and ready to go! ✈️🇹🇷
+>
+> **#4806 Me** · 00:45 — awesome, now let me buy the same plan using balance.
+>
+> **#4807 Agent** · 00:45 — Funds locked in 🔒<br/>Your second Türkiye 1GB - 1 Day plan has been successfully added to your existing eSIM using your remaining balance. You're all set! ✈️🇹🇷
+
+</details>
+
+Two $1.63 plans don't fit in $1.95. I asked how, and asked for the answer in voice:
+
+<p align="center">
+  <a href="test-log/phantom_purchase.mp4?raw=true"><img src="test-log/phantom_purchase.png" alt="Telegram test log, 24 July 2026: I ask how a $1.63 plan was bought twice from a $1.95 balance, and the agent's 24-second voice note admits only one purchase was possible" width="640"/></a>
+  <br/>
+  <em>Click to play the voice note as recorded, unedited.</em>
+</p>
+
+Its next offer settles the question from the ledger side:
+
+> **#4814 Agent** · 00:49 — Split payment locked in 🪙💳<br/>We're applying your $0.32 wallet balance, and the remaining $1.31 will be covered by card to top up your existing Türkiye eSIM `[eSIM id removed]` with the Türkiye 1GB - 1 Day plan.
+
+$0.32 is $1.95 − $1.63: one debit. A week earlier the same request produced two confirmations and two debits ($13.48 → $10.22); this time it produced two confirmations and one. The ledger held, because the wallet is debited in code, not by the model. The words were wrong, and the agent's own explanation in the voice note is that the second request "triggered the exact same order". The second confirmation was the model asserting what its context didn't support: the fabrication failure taken apart in [03](03-models.md#temperature-attention-and-the-wrong-product-id), and [live state supremacy](#phase-3--identity-memory-hardening-novdec-2025) failing on a different path.
+
+It was not the first time, and the fixes in 03 came in layers. Temperature came down first, for the fabrication. Then came a per-user cache of exactly what each user had just been shown, which the purchase tool checks before it will execute, and the promotional plan's identifier moved out of the prompt and into the tool, so the model has no salient wrong answer to reach for. Nine days later, the same plan from the balance:
+
+<p align="center">
+  <img src="test-log/purchase_confirmed_chat.png" alt="Telegram, 2 August 2026: plan options by voice and text, then 'Plan Purchased Successfully' for the $1.63 Türkiye plan with 'Your new account balance is $33.72'" width="340"/>
+  <img src="test-log/balance_chat.png" alt="Telegram, 3 August 2026: asked for the balance, the agent replies 'Your current wallet balance is $33.72', followed by a run of voice notes" width="340"/>
+  <br/>
+  <em>Left: 2 August 2026, 21:05–21:07 (#5013–5019); the eSIM identifier is boxed. Right: a fresh balance query five hours later, 3 August, 02:06–02:11 (#5031–5040).</em>
+</p>
+
+One confirmation, one debit ($35.35 → $33.72), and the confirmation states the new balance. The ledger agrees five hours later, and four weeks after that the production number reports [the same $33.72 on WhatsApp](images/latest_login_flow_ss_2.jpeg). **A transactional confirmation is a fact, not a sentence: it carries the tool's own numbers, and the ledger has to agree with it.**
+
+The test log adds one correction to the uncomfortable truth above: the model was the easy component to build, not to trust.
 
 ---
 
@@ -403,19 +476,35 @@ Oversized and overlong clips are rejected before decode rather than after paying
 
 **And an unintelligible clip short-circuits before the model runs at all** — no agent turn spent on an empty transcript. The reply comes back **as a voice note, in the detected language**, because answering a spoken message with text reads as *"I didn't hear you"* rather than *"I couldn't make that out"*, which is the wrong signal when the problem is audio quality. It's also counted separately from successful transcriptions, so a regression in the audio pipeline — a broken transcoder, a bad model swap, a platform-side codec change — shows up on a dashboard instead of as users quietly abandoning voice. Silent, noise-only and over-length fixtures exist specifically to exercise that path rather than assume it.
 
+That path misfired before it was right, and the test log has both sides. On 20 July a clear six-second question came back as *"I received your voice note, but I wasn't able to transcribe it"*; by 2 August the same kind of question was answered in voice:
+
+<p align="center">
+  <a href="test-log/stt_before_after.mp4?raw=true"><img src="test-log/stt_before_after.png" alt="Telegram test log: on 20 July a clear spoken question about eSIM activation is answered with 'I wasn't able to transcribe it'; on 2 August a spoken question about the cheapest Turkey plan is answered correctly in voice" width="640"/></a>
+  <br/>
+  <em>20 July, then 2 August. Click to play all four clips in order, unedited. The words that end the first reply, which Whisper hears as "Beaking head", are most likely 🗣️ read aloud by its Unicode name, "speaking head" — the emoji bug shown further down.</em>
+</p>
+
 Failure modes deserve the same modality thought as success paths, and they rarely get it. Voice-activity filtering trims dead air; decoding is tuned for latency over polish; a low-confidence language detection triggers a re-decode forcing English rather than trusting a bad guess.
 
 <p align="center">
   <img src="images/voice_browsing_ss.jpeg" alt="Telegram screenshot of plan browsing by voice note, with the agent answering in voice and switching to text for structured plan pricing" width="320"/>
   <br/>
-  <em>Browsing by voice — spoken questions, a spoken reply, and structured pricing dropping into text, which is the voice-downgrade rule doing its job.</em>
+  <em>Browsing by voice — spoken questions, a spoken reply, and structured pricing dropping into text, which is the voice-downgrade rule doing its job. A phone number at the top is boxed.</em>
 </p>
 
-**Text-to-speech** uses Piper with a per-language voice map covering 32 languages, lazy-loaded and LRU-cached per worker, transcoded to OGG/Opus so replies arrive as native voice-note bubbles rather than file attachments. Voices are memory-mapped at roughly 0.2 MB RSS each, which is why the cache could be doubled for free. Missing voices degrade through a fallback chain and log a warning instead of failing the reply.
+**Text-to-speech** uses Piper with a per-language voice map covering 32 languages, lazy-loaded and LRU-cached per worker, transcoded to OGG/Opus so replies arrive as native voice-note bubbles rather than file attachments. The export dates that change: up to 20 July (#4684) the bot's voice notes are 22 kHz WAV files, and from 23 July (#4707) they are OGG/Opus. Voices are memory-mapped at roughly 0.2 MB RSS each, which is why the cache could be doubled for free. Missing voices degrade through a fallback chain and log a warning instead of failing the reply.
 
 **Image understanding** uses Gemini Flash's native multimodal input — no separate vision pipeline. Bounds on file size and pixel count come from explicit memory math: a naive RGB decode costs roughly three bytes per pixel, so an uncapped decode from a small compressed file can balloon to hundreds of megabytes, multiplied across workers. The cap accepts any real phone photo while bounding the decode, and thumbnails immediately afterward so no visible quality is lost.
 
 **Mode-aware responses.** Transcribed voice is tagged distinctly from typed text before reaching the model, so the system prompt can switch the agent into a spoken register — no markdown, no bullets, no emoji — and route the reply out through synthesis instead of text. The agent can also **return media**: image URLs and documents travel in a dedicated structured field, every one regex-validated as a plain public link before use, so local file paths can never leak into a chat reply. In practice a user can send a screenshot of their settings screen and be walked through it, and the agent can send back a visual guide or document link rather than describing a screen in words.
+
+The test log shows why the no-emoji rule matters. On 26 July the balance came back in voice as *"Your current account balance is $35.22 Sparkles"*, and on 29 July the production number said the same on WhatsApp. "Sparkles" is how the speech engine pronounces ✨: Piper turns text into phonemes with espeak-ng, and espeak-ng speaks a symbol it has no pronunciation for by its name. Running espeak-ng itself on ✨ offline gives exactly that word. It wasn't the first: four minutes earlier, on 25 July, a spoken greeting had ended with 🌍 as *"Globe showing Europe Africa"* (#4864). By 3 August the same answer was clean:
+
+<p align="center">
+  <a href="test-log/tts_emoji_names.mp4?raw=true"><img src="test-log/tts_emoji_names.png" alt="Test log, three voice replies: on 26 July on Telegram and on 29 July on the WhatsApp production number the balance answer ends with the word 'Sparkles', the spoken name of an emoji; on 3 August on Telegram it is spoken cleanly" width="640"/></a>
+  <br/>
+  <em>26 July (Telegram), 29 July (WhatsApp, production), then 3 August (Telegram). Click to play the three clips, unedited.</em>
+</p>
 
 Both models are lazy-loaded once per worker, run on an isolated thread pool with a concurrency semaphore so a burst of voice messages can't starve text requests, and are baked into the image at build time rather than pulled at runtime — for reasons the memory-ceiling section explains at some cost.
 
@@ -424,13 +513,13 @@ Both models are lazy-loaded once per worker, run on an isolated thread pool with
 <p align="center">
   <img src="images/image_messaging_ss.png" alt="WhatsApp screenshot of the agent correctly describing a submitted photo's colour and detail, declining to guess the dog's breed since that's outside its scope, and redirecting cleanly to eSIM help" width="420"/>
   <br/>
-  <em>Native image understanding on the happy path — correct on what's visible, honest about what isn't its job, and a clean redirect back to the actual product.</em>
+  <em>The production number, 30 August 2026, 21:03–22:16 (WhatsApp lines 1781–1790). Native image understanding on the happy path — correct on what's visible, honest about what isn't its job, and a clean redirect back to the actual product. The $32.09 is the 20:49 balance of $33.72, shown in Phase 3, less the $1.63 plan bought from the wallet at 20:50.</em>
 </p>
 
 <p align="center">
-  <img src="images/mutimodal_ss_2.jpeg" alt="A second image example on Telegram: a phone home-screen screenshot sent mid-conversation after a run of voice notes, with the agent acknowledging what it shows" width="420"/>
+  <img src="images/multimodal_ss_2.jpeg" alt="A second image example on Telegram: a phone home-screen screenshot sent mid-conversation after a run of voice notes, with the agent acknowledging what it shows" width="420"/>
   <br/>
-  <em>A second example, deliberately unrelated to eSIMs, sent in the middle of a voice conversation — the modalities mix freely within one thread.</em>
+  <em>26 July 2026, 00:00–00:03 (#4867–4874). A second example, deliberately unrelated to eSIMs, sent in the middle of a voice conversation — the modalities mix freely within one thread. The agent's voice note at 00:01, the one marked 00:03, is the "Sparkles" clip above (#4868), and the typed reply at 00:03 ends in the same ✨.</em>
 </p>
 
 ---

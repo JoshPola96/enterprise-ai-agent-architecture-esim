@@ -67,7 +67,7 @@ One constraint that follows and isn't obvious: **the error text is passed throug
 <p align="center">
   <img src="images/balance_check_ss1.jpeg" alt="Telegram screenshot showing eSIM inventory presented with status, remaining data, and expiry, including the explanation that the validity clock starts on first data use rather than at purchase" width="420"/>
   <br/>
-  <em>Inventory presentation rules in practice — status, remaining data, and the validity-starts-on-first-use clarification that resolved a real customer confusion point.</em>
+  <em>Telegram, April 2026. Inventory presentation rules in practice — status, remaining data, and the validity-starts-on-first-use clarification that resolved a real customer confusion point.</em>
 </p>
 
 **Consultant, not order-taker.** The agent asks clarifying questions before recommending, suggests better-value alternatives unprompted, anticipates the obvious follow-up, and adapts its tone to conversation stage — exploratory browsing gets warmth and options, active troubleshooting gets brevity and steps. Where a result set is large enough to overwhelm, it narrows before presenting rather than dumping everything.
@@ -148,7 +148,7 @@ Pre-fetching is fail-soft throughout: episodic retrieval and pending-intent look
 <p align="center">
   <img src="images/rag_ss2.jpeg" alt="WhatsApp screenshot of the agent answering a network-operator lookup and correctly handling an out-of-scope question about a third-party physical SIM adapter product" width="420"/>
   <br/>
-  <em>Knowledge-base retrieval in practice, including a question genuinely outside the product's own catalogue — answered correctly rather than deflected.</em>
+  <em>The production number, 30 June 2026, 01:37–01:46 (WhatsApp lines 1647–1666). Knowledge-base retrieval in practice, including a question genuinely outside the product's own catalogue — answered correctly rather than deflected.</em>
 </p>
 
 ### Native hybrid search
