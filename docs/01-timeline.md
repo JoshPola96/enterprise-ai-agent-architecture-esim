@@ -26,7 +26,7 @@ gantt
     Phase 3 Identity memory hardening     :p3, 2025-11-01, 2025-12-31
     section Commerce
     Phase 4 Commerce and proactive events :p4, 2026-01-01, 2026-03-31
-    Investor demo day top 5 of 39         :milestone, m1, 2026-03-20, 0d
+    Investor pitch top 5 of 39            :milestone, m1, 2026-02-16, 0d
     section Hardening
     Phase 5 Security under live traffic   :p5, 2026-04-01, 2026-06-30
     Phase 6 Observability                 :p6, 2026-04-01, 2026-07-31
@@ -41,7 +41,7 @@ gantt
 | Jul–Sep 2025 | 1 · Multi-agent research | Three-agent system validated the premise; latency and context limits identified |
 | Oct 2025 | 2 · Production pivot | Collapse to a single agent on Gemini Flash and Qdrant — ~60% latency reduction |
 | Nov–Dec 2025 | 3 · Identity, memory, hardening | Cross-platform identity, intent preservation, circuit breakers, CI/CD |
-| Jan–Mar 2026 | 4 · Commerce | In-chat purchase, proactive notification pipeline · investor demo day, top 5 of 39 |
+| Jan–Mar 2026 | 4 · Commerce | In-chat purchase, proactive notification pipeline · investor pitch, selected top 5 of 39 |
 | Q2 2026 | 5 · Security | Layered defence under live attack · F6S #5 AI company |
 | Q2–Q3 2026 | 6 · Observability | Full metrics, logs, alerting as code, verified dashboards |
 | Q2–Q3 2026 | 7 · Multimodal | Self-hosted speech, native vision |
@@ -256,7 +256,7 @@ sequenceDiagram
     Note over W,RS: Crashed worker's messages reclaimed after the stale-idle threshold. Exhausted retries go to the dead-letter stream
 ```
 
-**Deduplication runs in three independent layers**, because each catches a duplicate the others can't. A claim-time idempotency key catches a retried payment webhook. The consumer group guarantees one message ID reaches exactly one of the four competing workers. And a final dedupe on platform-plus-chat-ID catches the case where one person maps to several contact channels that converge on the same thread — without it, they get the same payment confirmation twice. The claim key's five-minute TTL is deliberate: a worker that dies mid-flight releases its claim instead of locking the message away forever.
+**Deduplication runs in three independent layers**, because each catches a duplicate the others can't. The backend's idempotency key catches a retried payment webhook, and a short claim on each stream message stops a redelivered one from running twice. The consumer group guarantees one message ID reaches exactly one of the four competing workers. And a final dedupe on platform-plus-chat-ID catches the case where one person maps to several contact channels that converge on the same thread — without it, they get the same payment confirmation twice. The claim key's five-minute TTL is deliberate: a worker that dies mid-flight releases its claim instead of locking the message away forever.
 
 **Malformed payloads degrade, unknown ones vanish — and only one of those is acceptable.** Event templates render through a mapping that substitutes a visible `[field: not provided]` placeholder for any missing field instead of raising, so a half-populated backend payload produces a message the agent can reason about rather than a crashed delivery. An event type with *no* framer is the sharp edge: the webhook still returns 202, the stream still acknowledges, and the user receives nothing. That warning was deliberately raised from debug level, because it is the only signal that a backend release added an event the agent doesn't understand yet. Framer and event type have to ship in the same change.
 
@@ -344,7 +344,7 @@ The wallet leg committed, the card leg failed, and nothing rolled back: $10.22 h
 Two $1.63 plans don't fit in $1.95. I asked how, and asked for the answer in voice:
 
 <p align="center">
-  <a href="test-log/phantom_purchase.mp4?raw=true"><img src="test-log/phantom_purchase.png" alt="Telegram test log, 24 July 2026: I ask how a $1.63 plan was bought twice from a $1.95 balance, and the agent's 24-second voice note admits only one purchase was possible" width="640"/></a>
+  <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/phantom_purchase.mp4"><img src="test-log/phantom_purchase.png" alt="Telegram test log, 24 July 2026: I ask how a $1.63 plan was bought twice from a $1.95 balance, and the agent's 24-second voice note admits only one purchase was possible" width="640"/></a>
   <br/>
   <em>Click to play the voice note as recorded, unedited.</em>
 </p>
@@ -479,7 +479,7 @@ Oversized and overlong clips are rejected before decode rather than after paying
 That path misfired before it was right, and the test log has both sides. On 20 July a clear six-second question came back as *"I received your voice note, but I wasn't able to transcribe it"*; by 2 August the same kind of question was answered in voice:
 
 <p align="center">
-  <a href="test-log/stt_before_after.mp4?raw=true"><img src="test-log/stt_before_after.png" alt="Telegram test log: on 20 July a clear spoken question about eSIM activation is answered with 'I wasn't able to transcribe it'; on 2 August a spoken question about the cheapest Turkey plan is answered correctly in voice" width="640"/></a>
+  <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/stt_before_after.mp4"><img src="test-log/stt_before_after.png" alt="Telegram test log: on 20 July a clear spoken question about eSIM activation is answered with 'I wasn't able to transcribe it'; on 2 August a spoken question about the cheapest Turkey plan is answered correctly in voice" width="640"/></a>
   <br/>
   <em>20 July, then 2 August. Click to play all four clips in order, unedited. The words that end the first reply, which Whisper hears as "Beaking head", are most likely 🗣️ read aloud by its Unicode name, "speaking head" — the emoji bug shown further down.</em>
 </p>
@@ -501,7 +501,7 @@ Failure modes deserve the same modality thought as success paths, and they rarel
 The test log shows why the no-emoji rule matters. On 26 July the balance came back in voice as *"Your current account balance is $35.22 Sparkles"*, and on 29 July the production number said the same on WhatsApp. "Sparkles" is how the speech engine pronounces ✨: Piper turns text into phonemes with espeak-ng, and espeak-ng speaks a symbol it has no pronunciation for by its name. Running espeak-ng itself on ✨ offline gives exactly that word. It wasn't the first: four minutes earlier, on 25 July, a spoken greeting had ended with 🌍 as *"Globe showing Europe Africa"* (#4864). By 3 August the same answer was clean:
 
 <p align="center">
-  <a href="test-log/tts_emoji_names.mp4?raw=true"><img src="test-log/tts_emoji_names.png" alt="Test log, three voice replies: on 26 July on Telegram and on 29 July on the WhatsApp production number the balance answer ends with the word 'Sparkles', the spoken name of an emoji; on 3 August on Telegram it is spoken cleanly" width="640"/></a>
+  <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/tts_emoji_names.mp4"><img src="test-log/tts_emoji_names.png" alt="Test log, three voice replies: on 26 July on Telegram and on 29 July on the WhatsApp production number the balance answer ends with the word 'Sparkles', the spoken name of an emoji; on 3 August on Telegram it is spoken cleanly" width="640"/></a>
   <br/>
   <em>26 July (Telegram), 29 July (WhatsApp, production), then 3 August (Telegram). Click to play the three clips, unedited.</em>
 </p>

@@ -1,6 +1,6 @@
 # Building a Transaction-Capable AI Agent Before There Was a Playbook
 
-### Engineering field notes from thirteen months of production agentic AI — CPU-only, under $45/month
+### Engineering field notes from thirteen months building production agentic AI — CPU-only, under $45/month
 
 <p align="center">
   <strong>Joshua Peter Polaprayil</strong> · Full-Stack AI Engineer<br/>
@@ -39,7 +39,7 @@ The public timeline bears that out. OpenAI's in-chat checkout, Instant Checkout,
 
 The more interesting fact isn't "early". OpenAI wound Instant Checkout down in March 2026, around five months after launch: only about a dozen Shopify merchants had gone live, and Walmart reported that purchases completed inside ChatGPT converted at roughly a third of the rate of click-through. This system is a different scale and a different vertical — a focused eSIM concierge, not a general marketplace — so the comparison isn't "this beat that". It's narrower and more useful. A purchase journey that starts, confirms and completes inside the conversation — wallet payments settling in the thread, card payments through a hosted checkout link, the activation code delivered back into the chat — was still running here at handover in August 2026, re-integrated through a steady stream of backend changes along the way, while a far larger implementation of a similar pattern had already been walked back.
 
-That gap is why this document exists. The core problems here — exactly-once proactive delivery, cross-platform identity resolution, intent preservation across authentication boundaries, prompt-injection defence inside the request path — had to be solved from first principles, because there was no reference implementation to borrow from. Some of it would be built differently today with tooling that now exists. That's the point. These are field notes from before the playbook.
+That gap is why this document exists. The core problems here — exactly-once processing of proactive events, cross-platform identity resolution, intent preservation across authentication boundaries, prompt-injection defence inside the request path — had to be solved from first principles, because there was no reference implementation to borrow from. Some of it would be built differently today with tooling that now exists. That's the point. These are field notes from before the playbook.
 
 **What this is:** an architectural and engineering case study of a production system I designed, built and operated — written as a technical narrative. What I tried, what broke, what I measured, what I chose instead.
 
@@ -65,7 +65,7 @@ A production AI agent handling the complete eSIM customer lifecycle — discover
 | **Languages** | Agent mirrors the user's language · system text in 10 locales incl. RTL · speech voice map covers 32 languages |
 | **Hardware** | One 8 vCPU CPU-only VPS — no GPU, anywhere |
 | **Running cost** | **~$11–45/month** all-in at handover, against $300–500+ for a managed-cloud equivalent — trending upward since, as both the LLM provider and the VPS host have raised or signalled price rises |
-| **Recognition** | **Top 5 of 39** at an investor demo day · **#5** in [F6S's AI company ranking for Sheridan, Wyoming](https://www.f6s.com/companies/artificial-intelligence/united-states/wyoming/sheridan/co), where the company is registered (May 2026) |
+| **Recognition** | Selected **top 5 of 39** at an investor pitch · **#5** in F6S's AI company ranking for Sheridan, Wyoming, where the company is registered ([May 2026](#recognition)) |
 | **On the record** | **2,385** test messages exported from Telegram and WhatsApp, platform-timestamped, the wallet balance agreeing to the cent across both · native screenshots and original voice notes, hashed · [the exhibits](#from-the-test-logs) |
 
 **The model set, all on CPU:** three INT8 ONNX models in the request path — Meta's Llama Prompt Guard 2 for injection classification, a multilingual NER model for PII detection, and a cross-encoder reranker — plus self-hosted speech (faster-whisper at int8 and Piper TTS) and an offline-trained XGBoost risk classifier exported to ONNX.
@@ -144,11 +144,11 @@ gantt
     Identity memory hardening             :2025-11-01, 2025-12-31
     section Commerce
     In-chat commerce and proactive events :2026-01-01, 2026-03-31
-    Investor demo day top 5 of 39         :milestone, 2026-03-20, 0d
+    Investor pitch top 5 of 39            :milestone, 2026-02-16, 0d
     section Hardening
     Security under live traffic           :2026-04-01, 2026-06-30
     Observability                         :2026-04-01, 2026-07-31
-    F6S rank 5 AI company                 :milestone, 2026-05-15, 0d
+    F6S rank 5 AI in Sheridan WY          :milestone, 2026-05-15, 0d
     section Multimodal
     Voice and image                       :2026-05-01, 2026-08-10
     Measurement round                     :2026-07-15, 2026-08-10
@@ -238,7 +238,7 @@ Screenshots are taken in the apps themselves, with solid boxes over codes, conta
 
 <p align="center">
   <img src="docs/test-log/phantom_purchase_chat.png" alt="Telegram, 24 July 2026: two 'Funds locked in' confirmations for the same $1.63 plan from a $1.95 balance, my question how, and the agent's 24-second voice reply" width="300"/>
-  <a href="docs/test-log/phantom_purchase.mp4?raw=true"><img src="docs/test-log/phantom_purchase.png" alt="The same 24 July exchange as a card: my question and the agent's voice note, which admits only one purchase was possible" width="460"/></a>
+  <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/phantom_purchase.mp4"><img src="docs/test-log/phantom_purchase.png" alt="The same 24 July exchange as a card: my question and the agent's voice note, which admits only one purchase was possible" width="460"/></a>
   <br/>
   <em>24 July 2026, 00:44–00:49, in the Telegram app and as audio. Click the card to play the agent's voice note as recorded. The full exchange, and why the ledger was right while the words were wrong, is in <a href="docs/01-timeline.md#from-the-test-log-the-money-and-the-words">Phase 4</a>.</em>
 </p>
@@ -271,7 +271,7 @@ The stricter version was never built. In the final login relay the user still pa
 
 **F6S ranking — May 2026.** Ranked **#5** in F6S's monthly list of AI companies in Sheridan, Wyoming, where the company is registered. The [list](https://www.f6s.com/companies/artificial-intelligence/united-states/wyoming/sheridan/co) re-ranks every month, so here is [a snapshot from the time](https://www.instagram.com/p/DZIYxqtErg8/). F6S reshared the announcement to its own audience.
 
-**Investor demo day — March 2026.** The company presented at a competitive startup demo day and placed **Top 5 of 39**, with the autonomous agent highlighted as the key product differentiator.
+**Investor pitch — February 2026.** The company pitched to investors alongside 38 other startups and was selected **top 5 of 39** for the final round, with the autonomous agent highlighted as the key product differentiator.
 
 **The company's own team slide.** From the company's presentation deck, shown uncropped as I shared it in my [post of 7 April 2026](https://www.linkedin.com/posts/josh33-peter10_ai-startups-engineering-ugcPost-7447292696014016513-Jj4F/): the founder, me as AI/ML, and two engineers on backend and frontend — the split described in [My Role](#my-role).
 

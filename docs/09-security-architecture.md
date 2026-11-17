@@ -386,7 +386,7 @@ The silent 200 is the important part. Generating a rejection message would tell 
 
 ### Message coalescing as a security control
 
-People type in fragments — three short lines in four seconds. Inbound messages are buffered per user for half a second and joined before dispatch, with the first arrival winning a short lock that schedules the flush. That was a UX fix (the agent stopped answering the first fragment while the user was still typing the context), and it turned out to be an abuse fix too: **the guards score the whole utterance** rather than three sub-threshold pieces, so splitting a payload across rapid messages stopped being a way around the limits. Both problems had one cause — treating one intent as three events.
+One intent can arrive as several events: a forwarded batch, or a script firing fragments, lands as separate webhooks within milliseconds. Inbound messages are buffered per user for half a second and joined before dispatch, with the first arrival winning a short lock that schedules the flush. That was a UX fix (the agent stopped answering the first fragment before the rest arrived), and it turned out to be an abuse fix too: **the guards score the whole utterance** rather than sub-threshold pieces, so splitting a payload across near-simultaneous messages stopped being a way around them. Both problems had one cause — treating one intent as several events. The window is deliberately short; a person typing three lines over four seconds is not merged by it.
 
 ---
 

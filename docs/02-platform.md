@@ -2,7 +2,7 @@
 
 # Platform Constraints - Delivery, Localisation and the Memory Ceiling
 
-*Exactly-once message delivery, ten-language template localisation, and what it takes to run a full ML model set inside a fixed RAM budget.*
+*Exactly-once message processing, ten-language template localisation, and what it takes to run a full ML model set inside a fixed RAM budget.*
 
 ---
 
@@ -24,11 +24,11 @@ The splitter is also **code-fence aware**, which sounds fussy and isn't: a split
 
 **Platform-specific affordances.** Payment links render as a native inline keyboard button on Telegram, which is a materially better checkout experience than a raw URL; WhatsApp gets a formatted text link, because session-mode inline buttons aren't available there. Telegram supports callback queries for button interactions; WhatsApp requires a specific XML response format on the webhook. Both webhooks acknowledge immediately and process in the background, so platform timeouts never fire on a slow LLM call.
 
-**Message coalescing, because people don't type in paragraphs.** They send three short lines in four seconds. Treated naively that's three agent runs: three model calls, three tool budgets, and an agent answering the first fragment while the user is still typing the context for it — which reads as an assistant that interrupts.
+**Message coalescing, because one intent can arrive as several events.** A forwarded batch, or a script firing fragments, lands as separate webhooks within milliseconds of each other. Treated naively that's several agent runs: several model calls, several tool budgets, and an agent answering the first fragment before the rest has arrived.
 
-Inbound messages are therefore buffered per user for a fraction of a second and joined before dispatch, with the first arrival winning a short lock that schedules the flush. Cheap, and it fixed a class of "the bot didn't listen" complaint that no amount of prompt work would have touched.
+Inbound messages are therefore buffered per user for half a second and joined before dispatch, with the first arrival winning a short lock that schedules the flush. The window is deliberately short: it merges near-simultaneous arrivals rather than waiting on someone still typing. Merging a person's three lines over four seconds needs a debounce that restarts on each arrival, with a cap so a steady typist still gets an answer; that was the next step, not what shipped.
 
-It closed a security hole too, which I didn't anticipate: the abuse guards now score the *whole* utterance rather than three sub-threshold pieces, so splitting a payload across rapid messages stopped being a way around the rate limiter. Worth noting the general shape — a UX fix and an abuse fix turned out to be the same change, because both were caused by treating one intent as three events.
+It closed a security hole too, which I didn't anticipate: the abuse guards now score the *whole* utterance rather than sub-threshold pieces, so splitting a payload across near-simultaneous messages stopped being a way around them. Worth noting the general shape — a UX fix and an abuse fix turned out to be the same change, because both were caused by treating one intent as several events.
 
 **Broadcast.** Beyond per-user proactive events, an authenticated endpoint fans a single message out to every user with an active channel, through the same stream, the same ban checks, and the same closed-window template fallback as any other notification. Deliberately not a separate delivery path — a broadcast that bypassed the abuse gate would be the fastest possible way to message someone you'd already decided to block.
 
