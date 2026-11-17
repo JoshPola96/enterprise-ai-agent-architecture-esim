@@ -240,7 +240,7 @@ Screenshots are taken in the apps themselves, with solid boxes over codes, conta
   <img src="docs/test-log/phantom_purchase_chat.png" alt="Telegram, 24 July 2026: two 'Funds locked in' confirmations for the same $1.63 plan from a $1.95 balance, my question how, and the agent's 24-second voice reply" width="300"/>
   <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/phantom_purchase.mp4"><img src="docs/test-log/phantom_purchase.png" alt="The same 24 July exchange as a card: my question and the agent's voice note, which admits only one purchase was possible" width="460"/></a>
   <br/>
-  <em>24 July 2026, 00:44–00:49, in the Telegram app and as audio. Click the card to play the agent's voice note as recorded. The full exchange, and why the ledger was right while the words were wrong, is in <a href="docs/01-timeline.md#from-the-test-log-the-money-and-the-words">Phase 4</a>.</em>
+  <em>24 July 2026, 00:44–00:49, in the Telegram app and as audio: the agent's voice note as recorded, and the original, <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/audio/tg-4810.ogg">tg-4810.ogg</a>. The full exchange, and why the ledger was right while the words were wrong, is in <a href="docs/01-timeline.md#from-the-test-log-the-money-and-the-words">Phase 4</a>.</em>
 </p>
 
 ### Case study: the verification code the agent repeated

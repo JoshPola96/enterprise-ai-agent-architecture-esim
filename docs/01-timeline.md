@@ -346,7 +346,7 @@ Two $1.63 plans don't fit in $1.95. I asked how, and asked for the answer in voi
 <p align="center">
   <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/phantom_purchase.mp4"><img src="test-log/phantom_purchase.png" alt="Telegram test log, 24 July 2026: I ask how a $1.63 plan was bought twice from a $1.95 balance, and the agent's 24-second voice note admits only one purchase was possible" width="640"/></a>
   <br/>
-  <em>Click to play the voice note as recorded, unedited.</em>
+  <em>The voice note as recorded, unedited. Original: <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/audio/tg-4810.ogg">tg-4810.ogg</a>.</em>
 </p>
 
 Its next offer settles the question from the ledger side:
@@ -481,7 +481,7 @@ That path misfired before it was right, and the test log has both sides. On 20 J
 <p align="center">
   <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/stt_before_after.mp4"><img src="test-log/stt_before_after.png" alt="Telegram test log: on 20 July a clear spoken question about eSIM activation is answered with 'I wasn't able to transcribe it'; on 2 August a spoken question about the cheapest Turkey plan is answered correctly in voice" width="640"/></a>
   <br/>
-  <em>20 July, then 2 August. Click to play all four clips in order, unedited. The words that end the first reply, which Whisper hears as "Beaking head", are most likely 🗣️ read aloud by its Unicode name, "speaking head" — the emoji bug shown further down.</em>
+  <em>20 July, then 2 August: all four clips in order, unedited. Originals: <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/audio/tg-4683.ogg">tg-4683.ogg</a>, <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/audio/tg-4684.wav">tg-4684.wav</a>, <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/audio/tg-5012.ogg">tg-5012.ogg</a>, <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/audio/tg-5013.ogg">tg-5013.ogg</a>. The words that end the first reply, which Whisper hears as "Beaking head", are most likely 🗣️ read aloud by its Unicode name, "speaking head" — the emoji bug shown further down.</em>
 </p>
 
 Failure modes deserve the same modality thought as success paths, and they rarely get it. Voice-activity filtering trims dead air; decoding is tuned for latency over polish; a low-confidence language detection triggers a re-decode forcing English rather than trusting a bad guess.
@@ -503,7 +503,7 @@ The test log shows why the no-emoji rule matters. On 26 July the balance came ba
 <p align="center">
   <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/tts_emoji_names.mp4"><img src="test-log/tts_emoji_names.png" alt="Test log, three voice replies: on 26 July on Telegram and on 29 July on the WhatsApp production number the balance answer ends with the word 'Sparkles', the spoken name of an emoji; on 3 August on Telegram it is spoken cleanly" width="640"/></a>
   <br/>
-  <em>26 July (Telegram), 29 July (WhatsApp, production), then 3 August (Telegram). Click to play the three clips, unedited.</em>
+  <em>26 July (Telegram), 29 July (WhatsApp, production), then 3 August (Telegram): the three clips, unedited. Originals: <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/audio/tg-4868.ogg">tg-4868.ogg</a>, <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/audio/wa-1687.opus">wa-1687.opus</a>, <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/audio/tg-5028.ogg">tg-5028.ogg</a>.</em>
 </p>
 
 Both models are lazy-loaded once per worker, run on an isolated thread pool with a concurrency semaphore so a burst of voice messages can't starve text requests, and are baked into the image at build time rather than pulled at runtime — for reasons the memory-ceiling section explains at some cost.
