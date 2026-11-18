@@ -34,7 +34,7 @@ flowchart LR
 
 The graph's state object was substantially richer than the production agent's. Beyond the conversation messages, user and chat identifiers, and session data, it separately tracked: a `current_plan` (the structured output of the planning stage), a list of `subtasks` with individual status, an `execution_results` dictionary keyed by subtask, a full `reflection_history` across retry attempts, a `retry_count` against a `max_retries` ceiling, an explicit `current_phase` enum (`planning`, `executing`, `reflecting`, `responding`, `complete`), and a dedicated `auth_deferred_intent` slot for whatever the user had originally asked before authentication interrupted them. Every one of those fields existed because a distinct phase of the graph needed to read or write it — this was state modelling for a genuinely multi-stage process, not a single loop with extra bookkeeping bolted on.
 
-### Four roles, four temperatures
+### Four roles, three temperatures
 
 Rather than one model handling the whole turn, the design partitioned reasoning across four separately configured LLM roles, each on the same base model and API but tuned differently for its job:
 
@@ -71,7 +71,7 @@ Even as a pure research artefact, this prototype was built with real operational
 
 ### The honest cost accounting
 
-Walk a realistic case: concurrent context loading, one planning call, at least one tool-execution pass, one reflection call, and — if reflection asks for a retry — another planning-through-reflection cycle before the final synthesis call. That's three model calls on the simplest tool-using path and five or more with a single retry, for a turn a flat tool-calling loop handles in one — before counting anything a synthesised memory layer like the one below would add. Measured against [Performance](06-performance.md#performance), where the production system's actual bottleneck is squarely LLM latency and the framework overhead is negligible, this design multiplies the expensive part of the pipeline by exactly the factor you can't afford to multiply.
+Walk a realistic case: concurrent context loading, one planning call, at least one tool-execution pass, one reflection call, and — if reflection asks for a retry — another planning-through-reflection cycle before the final synthesis call. That's three model calls on the simplest tool-using path and five or more with a single retry, before counting anything a synthesised memory layer like the one below would add; a flat tool-calling loop needs two, one to call the tool and one to answer. Measured against [Performance](06-performance.md#performance), where the production system's actual bottleneck is squarely LLM latency and the framework overhead is negligible, this design multiplies the expensive part of the pipeline by exactly the factor you can't afford to multiply.
 
 **What it confirms, not just what it cost.** The validated-tool-boundary approach that shipped — a whitelist, strict schema checking, a two-strike retry rule (see [The Agent Itself](05-architecture.md#the-agent-itself)) — gets a meaningful share of the reliability benefit this design's reflection loop was reaching for, and gets it *before* a bad call executes rather than critiquing it afterward. Prevention beat detection here, and this prototype is the clearest evidence available for why.
 

@@ -28,7 +28,7 @@ Rather than choosing off release notes and benchmark blog posts, I built a harne
 |---|---|---|---|---|
 | Pass rate | 99.0% | 99.0% | 98.0% | **100.0%** |
 | Avg latency/suite | 765s | 567s | **183s** | 423s |
-| Cost, 24 runs | **$2.22** | $14.82 | $2.28 | $12.89 |
+| Cost of its 6 runs | **$2.22** | $14.82 | $2.28 | $12.89 |
 | Projected monthly @ 1k conversations/day | $680 | $4,536 | $698 | $3,947 |
 
 ```mermaid
@@ -123,7 +123,7 @@ There's an honest cost to running at 0.1. Conversational output is measurably st
 
 2. **Validate identifiers at the tool boundary — against what was actually shown, not just what's theoretically valid.** Every plan-listing call fire-and-forgets the exact `product_id → price` pairs it just displayed into a short-lived, per-user cache. The purchase tool then refuses to execute unless *both* checks pass: the identifier must be present in that specific user's most-recent listing, and the price the agent quoted must match the cached price to within a cent. A mismatched or hallucinated ID doesn't get a generic rejection — it gets told plainly that the ID it tried costs a different amount than it claimed, which is usually enough for the model to recover and re-fetch on its own rather than guess again. The check isn't "is this a real product somewhere in the catalogue" — it's "is this exactly what I told this specific user five seconds ago," which is a much narrower and much safer question to answer deterministically.
 
-Together those reduce the failure probability from *unlikely-but-nonzero* to *structurally impossible*, and they let temperature go back up to where conversational quality lives.
+Together those take a purchase of anything this user wasn't just shown, or at any other price, from *unlikely-but-nonzero* to *structurally impossible*, and they would let temperature go back up to where conversational quality lives.
 
 **The general shape of this.** Two distinct failure modes that present almost identically from the outside — a confidently wrong answer. One is the model ranging past what its context supports, which sampling temperature governs and history-trimming aggravates. The other is the model picking the wrong item from a large payload, which no prompt instruction and no sampling setting reliably fixes. For the second, the durable answer is always the same: shrink what the model has to select from, and validate the selection outside the model.
 

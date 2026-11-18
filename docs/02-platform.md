@@ -1,6 +1,6 @@
 [&larr; Back to the case study](../README.md)
 
-# Platform Constraints - Delivery, Localisation and the Memory Ceiling
+# Platform Constraints — Delivery, Localisation and the Memory Ceiling
 
 *Exactly-once message processing, ten-language template localisation, and what it takes to run a full ML model set inside a fixed RAM budget.*
 

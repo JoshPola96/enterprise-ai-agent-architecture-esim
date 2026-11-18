@@ -646,7 +646,7 @@ One asymmetry worth designing around: `unblock` treats the account as *clean*, n
 
 ## 15. Validation Under Attack
 
-Sixty seconds of mixed traffic against the live Telegram webhook on an 8-core CPU-only host: **30 concurrent attackers** sending payloads designed to force the injection classifier, alongside legitimate full-pipeline conversations running retrieval and LLM inference at a quota-respecting rate.
+Sixty seconds of mixed traffic against the Telegram webhook endpoint of the full running app, on an 8-core CPU-only bench host: **30 concurrent attackers** sending payloads designed to force the injection classifier, alongside legitimate full-pipeline conversations running retrieval and LLM inference at a quota-respecting rate.
 
 | Traffic | Success | Requests | RPS | Avg | p95 |
 |---|---|---|---|---|---|

@@ -1,6 +1,6 @@
 [&larr; Back to the case study](../README.md)
 
-# Timeline - Seven Phases of Production Agentic AI
+# Timeline — Seven Phases of Production Agentic AI
 
 *How the system got from a multi-agent research prototype to a transaction-capable production agent, phase by phase.*
 
@@ -395,7 +395,7 @@ flowchart LR
 | **ML risk scoring** | 21 conduct features, labels protected from target leakage, promotion gates, and inference that stays off until a human turns it on |
 | **Data protection** | Per-entity PII confidences that retain destinations for personalisation, and one key driving both Fernet encryption and deterministic HMAC lookup hashes |
 
-Validated adversarially: **19,164 malicious payloads absorbed at 319 RPS** while legitimate traffic held **100% success**.
+Validated adversarially: **19,164 malicious payloads absorbed at 319 RPS** while legitimate traffic held **100% success** (bench, pre-multimodal).
 
 The infrastructure itself was reshaped by that experience. The first deployment was built for scalability in the abstract; what it actually met on going public was a security onslaught. The redesign that followed optimised hard for performance under that reality — moving to a stream-based message-processing model guarded by semaphores (the same shape as the [notification system](#phase-4--commerce--proactive-engagement-q1-2026)), and pulling essentially every operational value out into environment configuration so limits, workers and model choices could be retuned without a code change.
 

@@ -125,7 +125,7 @@ The reranker and the model dominate. Everything else was optimised until it stop
 
 ## Economics
 
-The fixed cost is one server and a domain; the rest is free, self-hosted, or billed per use. The table gives public list prices, not the company's invoices; what was actually paid follows it.
+The fixed cost is one server and a domain; the rest is free, self-hosted, or billed per use. The table gives public list prices, not the company's invoices; what was actually paid follows it. Stripe's fee on each card payment is a cost of the sale, not of running the system, and is left out.
 
 | Line | What ran | At handover (Aug 2026) | Now (Nov 2026) |
 |---|---|---|---|
