@@ -507,7 +507,7 @@ Both models are lazy-loaded once per worker, run on an isolated thread pool with
 <p align="center">
   <img src="images/image_messaging_ss.png" alt="WhatsApp screenshot of the agent correctly describing a submitted photo's colour and detail, declining to guess the dog's breed since that's outside its scope, and redirecting cleanly to eSIM help" width="420"/>
   <br/>
-  <em>The production number, 30 August 2026, 21:03–22:16 (WhatsApp lines 1781–1790). Native image understanding on the happy path — correct on what's visible, honest about what isn't its job, and a clean redirect back to the actual product. The $32.09 is the 20:49 balance of $33.72, shown in Phase 3, less the $1.63 plan bought from the wallet at 20:50.</em>
+  <em>The production number, 30 August 2026, 21:03–22:16 (WhatsApp lines 1781–1791). Native image understanding on the happy path — correct on what's visible, honest about what isn't its job, and a clean redirect back to the actual product. The $32.09 is the 20:49 balance of $33.72, shown in Phase 3, less the $1.63 plan bought from the wallet at 20:50.</em>
 </p>
 
 <p align="center">

@@ -272,7 +272,13 @@ The stricter version was never built. In the final login relay the user still pa
 
 **F6S ranking — May 2026.** Ranked **#5** in F6S's monthly list of AI companies in Sheridan, Wyoming, where the company is registered. The [list](https://www.f6s.com/companies/artificial-intelligence/united-states/wyoming/sheridan/co) re-ranks every month, so here is [a snapshot from the time](https://www.instagram.com/p/DZIYxqtErg8/). F6S reshared the announcement to its own audience.
 
-**Investor pitch — February 2026.** The company pitched to investors alongside 38 other startups and was selected **top 5 of 39** for the final round, with the autonomous agent highlighted as the key product differentiator.
+**Investor pitch — February 2026.** The company pitched to investors alongside 38 other startups and was selected **top 5 of 39** for the final round, with the autonomous agent highlighted as the key product differentiator. The final round was a demo day for investors in Istanbul on 6 April 2026.
+
+<p align="center">
+  <img src="docs/images/demo_day_2026-04-06.jpg" alt="The founder on stage beside slide 16 of the company's deck, titled Ekibimiz, Turkish for Our Team: Joshua P. Polaprayil as AI/ML Engineer, a full-stack engineer and a frontend developer; a Turkish flag to the left of the screen, and the audience in the foreground" width="640"/>
+  <br/>
+  <em>The demo day, 6 April 2026: the founder presenting the team slide, with me as AI/ML Engineer. The banners at the edges are KOSGEB's and BTM TEKMER's, the Istanbul Chamber of Commerce's startup centre.</em>
+</p>
 
 **The company's own team slide.** From the company's presentation deck, shown uncropped as I shared it in my [post of 7 April 2026](https://www.linkedin.com/posts/josh33-peter10_ai-startups-engineering-ugcPost-7447292696014016513-Jj4F/): the founder, me as AI/ML, and two engineers on backend and frontend — the split described in [My Role](#my-role).
 
