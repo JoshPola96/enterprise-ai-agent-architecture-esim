@@ -51,7 +51,7 @@ gantt
 
 ## The Constraint That Shaped Everything
 
-Most published agent architectures assume elastic cloud budget and GPU inference. This one had neither. The entire platform — agent, vector database, every ML model, observability stack — runs on a single commodity CPU box that lists at €14 a month.
+Most published agent architectures assume elastic cloud budget and GPU inference. This one had neither. The entire platform — agent, vector database, every ML model, observability stack — runs on a single commodity CPU box, for about $18 a month plus a few cents per conversation.
 
 That constraint became the most productive design pressure in the project. It closed off brute force at every decision point and forced a discipline I now apply by default: **maximum capability, minimum footprint.**
 
@@ -460,7 +460,7 @@ Alerting is provisioned as code alongside the dashboards — availability, agent
 
 The most recent work: native voice and image, **entirely self-hosted — no per-minute speech billing, no third-party voice APIs.**
 
-This sits alongside a handful of pieces in this project I'd call genuinely novel — not because the components are exotic, but because the *combination* wasn't a thing anyone had a reference implementation for when I built it: a full voice-and-image concierge that also transacts, running on CPU inside conversational latency, on a €14-a-month server. Like the [notification system](#phase-4--commerce--proactive-engagement-q1-2026) and the [identity manager](#phase-3--identity-memory-hardening-novdec-2025), the multimodal layer is a simple, cheap, elegant solution to a problem usually answered with expensive infrastructure — each one arrived at the same way: my own insight, a lot of reading, and iteration against a real latency and cost budget rather than a whiteboard. I'm documenting it in some depth precisely because the lean-multimodal path is under-travelled and I'd have wanted these notes myself.
+This sits alongside a handful of pieces in this project I'd call genuinely novel — not because the components are exotic, but because the *combination* wasn't a thing anyone had a reference implementation for when I built it: a full voice-and-image concierge that also transacts, running on CPU inside conversational latency, for about $18 a month plus a few cents per conversation. Like the [notification system](#phase-4--commerce--proactive-engagement-q1-2026) and the [identity manager](#phase-3--identity-memory-hardening-novdec-2025), the multimodal layer is a simple, cheap, elegant solution to a problem usually answered with expensive infrastructure — each one arrived at the same way: my own insight, a lot of reading, and iteration against a real latency and cost budget rather than a whiteboard. I'm documenting it in some depth precisely because the lean-multimodal path is under-travelled and I'd have wanted these notes myself.
 
 **Speech-to-text** runs faster-whisper directly on raw audio from both platforms, which deliver ogg/opus natively so nothing needs transcoding inbound. Model size was chosen by measurement rather than default — benchmarked at INT8 on CPU:
 

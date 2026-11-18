@@ -2,7 +2,7 @@
 
 # Performance and Economics
 
-*Measured latency across the request path, and what it costs to run: one €14-a-month server, plus about 2.3¢ of LLM per conversation.*
+*Measured latency across the request path, and what it costs to run and develop: about $18 a month, plus a few cents per conversation.*
 
 ---
 
@@ -138,12 +138,13 @@ The fixed cost is one server and a domain; the rest is free, self-hosted, or bil
 | Edge | Cloudflare: WAF rules, Bot Fight Mode, one rate-limiting rule, Turnstile, Origin CA | $0: all on the free plan | $0 |
 | CI/CD | GitHub Actions · GHCR | $0 within the plan's included minutes, then $0.006 a Linux minute; image storage free | Same |
 | Tracing | LangSmith | $0 up to 5,000 traces a month; Plus is $39 a seat | Same |
+| Development | The same stack on my own machine, behind a tunnel, with a Telegram development bot | $0: the tunnel's free plan | $0 |
 | Speech · guards · reranker · vector DB · cache · database · metrics and logs | Self-hosted on the server | $0 | $0 |
 | **Fixed, on the free tiers** | | **about $18 a month** | **about $17** |
 
 Server prices are Contabo's EU-region list; its other regions add a location fee. Dollar figures use the ECB reference rate on 19 August and 17 November 2026; the euro price did not move.
 
-**Per conversation.** The [model evaluation](03-models.md#so-i-measured-instead-of-arguing) projected $680 a month for 2.5 Flash at 1,000 conversations a day: about **2.3¢ a conversation** at list price, before prompt caching. With caching, the ~15k-token static prefix is billed at a tenth of the input rate, plus storage by the hour; the cost per conversation with the cache active [was never measured](03-models.md#where-it-stands--and-why-its-still-open). Images are billed as input tokens. Voice adds nothing, because speech is transcribed and synthesised on the server. On WhatsApp the channel can cost more than the model: at $0.005 a message, a ten-message exchange is 5¢ in Twilio fees. On Telegram it is free.
+**Per conversation.** The [model evaluation](03-models.md#so-i-measured-instead-of-arguing) projected $680 a month for 2.5 Flash at 1,000 conversations a day: about **2.3¢ a conversation** at list price, before prompt caching. With caching, the ~15k-token static prefix is billed at a tenth of the input rate, plus storage by the hour; the cost per conversation with the cache active [was never measured](03-models.md#where-it-stands--and-why-its-still-open). Images are billed as input tokens. Voice adds nothing, because speech is transcribed and synthesised on the server. On WhatsApp the channel can cost more than the model: at $0.005 a message, a ten-message exchange is 5¢ in Twilio fees. On Telegram it is free. Development traffic bills at the same rates: the whole 2.5 Flash leg of the evaluation, six runs of the integration suites, cost $2.22.
 
 **Against the alternatives**, at list prices on 18 November 2026. The fixed cost first:
 
