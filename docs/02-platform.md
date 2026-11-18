@@ -38,6 +38,14 @@ It closed a security hole too, which I didn't anticipate: the abuse guards now s
   <em>The production number, 16–17 June 2026 (WhatsApp lines 1593–1606). A broadcast landing through the ordinary notification path — same pipeline, same guards, nothing special-cased. The login code at the top is boxed.</em>
 </p>
 
+The broadcasts of 20 May show why the agent has to be told who is speaking. A broadcast then reached it as bare text, with nothing to mark where it came from, and the agent took the announcement for something I had said: twice it thanked me for a maintenance notice I never sent, before the notice itself went out. Later that day broadcasts got their own framing, which tells the agent it is relaying an announcement and must not treat it as a message from the user.
+
+<p align="center">
+  <img src="test-log/broadcast_misread_chat.jpg" alt="WhatsApp, production number, 20 May 2026: my login code, boxed, at 00:36 and the welcome back; then, with nothing more from me, the agent thanking me for the heads-up about maintenance at 00:47 and again at 00:54; at 00:57 the maintenance announcement itself" width="420"/>
+  <br/>
+  <em>The production number, 20 May 2026, 00:36–00:57 (WhatsApp lines 936–944). My last message is the login code at 00:36, boxed. Nothing I sent follows it, yet at 00:47 and 00:54 the agent thanks me for the heads-up; the announcement it was meant to relay arrives at 00:57.</em>
+</p>
+
 **Localisation.** System-generated messaging — verification prompts, phone-share requests, rate-limit and suspension notices, OTP fallback text, and the entire human-verification web page — ships in **ten languages**: English, Turkish, German, Spanish, French, Hindi, Malayalam, Portuguese, Italian, and Arabic, the last with right-to-left layout. Locale resolves from the Telegram client's declared language, the WhatsApp number's country prefix, or the browser's accept-language header, depending on where the user is being addressed.
 
 **Inferred locale and declared locale deserve different confidence.** A phone country code is a guess about language; a client's declared language setting is a stated preference. So India's `+91` prefix deliberately resolves to English even though Hindi and Malayalam catalogues exist — those are reachable when the user's own client asks for them, not when a prefix implies it. Guessing wrong on a *system* message is a bad failure: it's the message someone reads when something has already gone wrong, so an unreadable one compounds the problem rather than softening it. Defaulting to a language they certainly read beats a coin-flip at a language they might prefer.
