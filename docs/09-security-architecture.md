@@ -480,6 +480,8 @@ clean       ← otherwise
 
 The score, flag and ban columns that feed that rule are **deliberately excluded from the feature set**. Include them and the model learns `label = f(score)`: near-perfect F1, a clean pass through the promotion gate, and a classifier that has learned nothing about behaviour — it would just restate the rule that generated its own labels, useless on any account the rule hadn't already judged. The classifier exists to catch what deterministic rules miss, which is only possible if it is denied their inputs. **A sudden dramatic F1 improvement after a schema change is a leak until proven otherwise.**
 
+One feature stays close to that rule: the count of recorded flag events, which rises with every score increase. It was in the original feature set and was still there at handover.
+
 ### The training and promotion pipeline
 
 ```mermaid
