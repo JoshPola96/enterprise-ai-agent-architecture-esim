@@ -1,6 +1,6 @@
 # Building a Transaction-Capable AI Agent Before There Was a Playbook
 
-### Engineering field notes from thirteen months building production agentic AI — CPU-only, under $45/month
+### Engineering field notes from thirteen months building production agentic AI — CPU-only, on one €14-a-month server
 
 <p align="center">
   <strong>Joshua Peter Polaprayil</strong> · Full-Stack AI Engineer<br/>
@@ -64,7 +64,7 @@ A production AI agent handling the complete eSIM customer lifecycle — discover
 | **Observability** | 51 application metrics · ~120-panel operator dashboard · 8 alert rules as code |
 | **Languages** | Agent mirrors the user's language · system text in 10 locales incl. RTL · speech voice map covers 32 languages |
 | **Hardware** | One 8 vCPU CPU-only VPS — no GPU, anywhere |
-| **Running cost** | **~$11–45/month** all-in at handover, against $300–500+ for a managed-cloud equivalent — trending upward since, as both the LLM provider and the VPS host have raised or signalled price rises |
+| **Running cost** | **About $18 a month fixed** at handover list prices: one €14 server and a domain. On top, per use: about 2.3¢ of LLM per conversation before prompt caching, and $0.005 per WhatsApp message each way. Speech, guards, reranking and data stores are self-hosted, at $0 ([breakdown](docs/06-performance.md#economics)) |
 | **Recognition** | Selected **top 5 of 39** at an investor pitch · **#5** in F6S's AI company ranking for Sheridan, Wyoming, where the company is registered ([May 2026](#recognition)) |
 | **On the record** | **2,385** test messages exported from Telegram and WhatsApp, platform-timestamped, the wallet balance agreeing to the cent across both · native screenshots and original voice notes, hashed · [the exhibits](#from-the-test-logs) |
 
@@ -182,7 +182,7 @@ An engineering narrative, split by theme. Start anywhere — each part stands on
 | **03** | [**Models, Temperature & Attention**](docs/03-models.md) | A 24-run model evaluation, why the decision stayed open, and the wrong-product-ID failure that no prompt or temperature setting could fix. |
 | **04** | [**Evaluation, Testing & Delivery**](docs/04-engineering.md) | Offline MLOps, the test layers, contract tests for silent drift, the incident that redefined "tested", and the delivery pipeline. |
 | **05** | [**System Architecture**](docs/05-architecture.md) | The agent loop, the sixteen-section system prompt, hybrid retrieval, the data layer, and the full technology stack. |
-| **06** | [**Performance & Economics**](docs/06-performance.md) | Measured latency across the whole request path, with provenance, and the cost breakdown behind running all of it for under $45 a month. |
+| **06** | [**Performance & Economics**](docs/06-performance.md) | Measured latency across the whole request path, with provenance, and what running all of it costs, line by line, at handover and now. |
 | **07** | [**Limitations, Next Steps & Lessons**](docs/07-reflections.md) | What was still open at handover, the prioritised work that came next, how the system is governed, and what I'd tell someone starting this today. |
 
 **Deep dives, outside the seven-part narrative:**

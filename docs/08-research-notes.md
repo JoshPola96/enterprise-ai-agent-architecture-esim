@@ -127,7 +127,7 @@ The prototype issued each interaction's relational write and vector write concur
 
 Direct retrieval produces, as a side effect of a single search call, most of what this design spent two to three extra model calls trying to reconstruct explicitly. The "current goal" the scratchpad computed fresh every turn is, in the shipped design, simply the live conversation state already sitting in front of the agent — nothing needs to be summarised because nothing needed reconstructing in the first place. The biography this design synthesised and then invalidated almost as fast as it cached it is replaced, in production, by memory that's always current because it was never stale to begin with — it's retrieved fresh each time, not maintained as a standing artefact that can drift out of sync with what actually happened.
 
-**The honest framing, stated plainly:** this is the more research-faithful implementation of the cited technique, and the shipped system is the more production-faithful one. Both are legitimate answers to "how should an agent remember." Only one of them runs for under $45 a month.
+**The honest framing, stated plainly:** this is the more research-faithful implementation of the cited technique, and the shipped system is the more production-faithful one. Both are legitimate answers to "how should an agent remember." Only one of them fits the cost ceiling production ran under.
 
 ---
 
