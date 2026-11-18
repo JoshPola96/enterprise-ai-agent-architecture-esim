@@ -234,7 +234,8 @@ Screenshots are taken in the apps themselves, with solid boxes over codes, conta
 | **"$35.22 Sparkles"** | 26 Jul → 3 Aug 2026 | The ✨ in a reply read aloud by its name, on both channels, then gone | voice | [01](docs/01-timeline.md#phase-7--multimodal-q2q3-2026) |
 | **Hindi in an English voice** | 3 Aug 2026 | The speech bug in Known Limitations, as first heard | voice | [07](docs/07-reflections.md#known-limitations) |
 | **"Letter 1E37"** | 30 Aug 2026 | The same bug on the production number, with accented letters spoken as Unicode code points | voice | [07](docs/07-reflections.md#known-limitations) |
-| **The code the agent repeated** | 23 → 26 May 2026 | A verification code quoted back three days after delivery | screenshot · text | [↓](#case-study-the-verification-code-the-agent-repeated) |
+| **Read from a screenshot** | 20–23 Jul 2026 | Phone settings sent as images and read back: the model, the screen I was on, two SIMs, a missing IP address | screenshots | [01](docs/01-timeline.md#phase-7--multimodal-q2q3-2026) |
+| **The code the agent repeated** | 23 → 29 May 2026 | A verification code quoted back three days after delivery, then the template that took codes out of the agent's replies | screenshots · text | [↓](#case-study-the-verification-code-the-agent-repeated) |
 
 <p align="center">
   <img src="docs/test-log/phantom_purchase_chat.png" alt="Telegram, 24 July 2026: two 'Funds locked in' confirmations for the same $1.63 plan from a $1.95 balance, my question how, and the agent's 24-second voice reply" width="300"/>
@@ -263,6 +264,12 @@ The fix moved the code out of the model's mouth. From 29 May each code arrives a
 > **Esimtime Agent** · WhatsApp, 29 May 2026, 20:48 — *`[code removed]`* is your verification code. For your security, do not share this code.
 
 That is WhatsApp's authentication template: fixed wording that Meta approves and the model never composes, sent through the [notification path](docs/01-timeline.md#phase-4--commerce--proactive-engagement-q1-2026) rather than the agent loop. The agent only asks the user to send the code back, and from then on the production log shows it asking for codes, never quoting them.
+
+<p align="center">
+  <img src="docs/test-log/otp_template_chat.jpg" alt="WhatsApp, production number, 28–29 May 2026: a welcome message still carrying a one-time password, boxed; then on 29 May the code arriving alone in the authentication template, boxed, and my 'Hello' answered without it" width="360"/>
+  <br/>
+  <em>The production number in the WhatsApp app: on 28 May at 16:37 the welcome text still carries the code (line 1143); on 29 May at 20:48 it arrives in the authentication template instead (line 1146), and the reply to my next message, at 23:48, doesn't quote it (lines 1147–1148). Codes boxed; the hash of the unredacted original is in <code>SHA256SUMS</code>.</em>
+</p>
 
 The stricter version was never built. In the final login relay the user still pastes an emailed code back into the chat ([Phase 3](docs/01-timeline.md#phase-3--identity-memory-hardening-novdec-2025)); it is scrubbed before logs and long-term memory ([§12](docs/09-security-architecture.md#12-data-protection)), but it sits in the context of the turn that verifies it. The next step is to take the code on the relay's own web form, out of band, so that it never reaches the model. MCP's URL-mode elicitation ([SEP-1036](https://modelcontextprotocol.io/community/seps/1036-url-mode-elicitation-for-secure-out-of-band-intera)) standardises exactly this for agent tooling: credentials go to a URL, never through the client.
 

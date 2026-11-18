@@ -494,6 +494,13 @@ Failure modes deserve the same modality thought as success paths, and they rarel
 
 **Mode-aware responses.** Transcribed voice is tagged distinctly from typed text before reaching the model, so the system prompt can switch the agent into a spoken register — no markdown, no bullets, no emoji — and route the reply out through synthesis instead of text. The agent can also **return media**: image URLs and documents travel in a dedicated structured field, every one regex-validated as a plain public link before use, so local file paths can never leak into a chat reply. In practice a user can send a screenshot of their settings screen and be walked through it, and the agent can send back a visual guide or document link rather than describing a screen in words.
 
+<p align="center">
+  <img src="test-log/settings_walkthrough_20jul.png" alt="Telegram, 20 July 2026: my About-phone screenshot, answered 'I see you have a POCO X3 NFC' with two ways to check eSIM support; then my Security-status screenshot, answered 'I see you're in the Security status section… you'll need to look in a different place'" width="300"/>
+  <img src="test-log/settings_walkthrough_21-23jul.png" alt="Telegram, 21 and 23 July 2026: my SIM settings screenshot, numbers boxed, read back as two physical SIMs, BSNL Mobile and Jio, with mobile data on; a VPN settings screen recognised as one; and an Advanced-settings screen where the agent explains why IP and DNS show 'Not available'" width="300"/>
+  <br/>
+  <em>The development bot in the Telegram app. Left, 20 July: the About-phone screen, answered at 21:41 on its fourth send, the first three having gone unanswered (#4675–#4679), then the Security-status screen and the redirect (#4681–#4682). Right: 21 July, the SIM settings read back, phone numbers boxed (#4698–#4699); 23 July, a VPN screen and why IP and DNS show "Not available" (#4733–#4738).</em>
+</p>
+
 The test log shows why the no-emoji rule matters. On 26 July the balance came back in voice as *"Your current account balance is $35.22 Sparkles"*, and on 29 July the production number said the same on WhatsApp. "Sparkles" is how the speech engine pronounces ✨: Piper turns text into phonemes with espeak-ng, and espeak-ng speaks a symbol it has no pronunciation for by its name. Running espeak-ng itself on ✨ offline gives exactly that word. It wasn't the first: four minutes earlier, on 25 July, a spoken greeting had ended with 🌍 as *"Globe showing Europe Africa"* (#4864). By 3 August the same answer was clean:
 
 https://github.com/user-attachments/assets/b35e122a-bc56-4eac-8132-d8da71cdfaf4
