@@ -392,7 +392,7 @@ flowchart LR
 | **Semantic gate** | Three cheap fast paths, then chunked, batched classification with a strike rule that defeats dilution attacks. Voice transcripts are scanned too, because a spoken injection walks past every text guard |
 | **Honeypot** | Invisible zero-width bait; a bot that echoes it is dropped with a silent 200 before the agent is ever invoked |
 | **Agent-initiated flagging** | The model itself flags what patterns can't see — including injections smuggled through voice or text inside images — with real blocking power |
-| **ML risk scoring** | 21 conduct features, labels protected from target leakage, promotion gates, and inference that stays off until a human turns it on |
+| **ML risk scoring** | 21 features, rebuilt around conduct, labels protected from target leakage, promotion gates, and inference that stays off until a human turns it on |
 | **Data protection** | Per-entity PII confidences that retain destinations for personalisation, and one key driving both Fernet encryption and deterministic HMAC lookup hashes |
 
 Validated adversarially: **19,164 malicious payloads absorbed at 319 RPS** while legitimate traffic held **100% success** (bench, pre-multimodal).

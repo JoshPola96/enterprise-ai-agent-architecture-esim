@@ -459,7 +459,7 @@ The first feature set described what an account **is** — has an email, account
 
 | Group | Features (21 total) |
 |---|---|
-| Account shape | guest status · has email · has phone · Turnstile-verified · trial claimed |
+| Account shape | guest status · has email · has phone · Turnstile-verified · trial claimed · security-flag count |
 | Reach | device-fingerprint count · platform count · **shared-fingerprint peers** |
 | Volume | conversations · messages · **distinct active days** · **messages per active day** · **max messages in an hour** |
 | Rhythm | **median seconds between messages** · **duplicate-message ratio** · **average message length** · **assistant reply ratio** |
