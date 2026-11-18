@@ -2,7 +2,7 @@
 
 # Performance and Economics
 
-*Measured latency across the request path, and what it costs to run and develop: about $18 a month, plus a few cents per conversation.*
+*Measured latency across the request path, and what it costs to run and develop: about $17 a month, plus a few cents per conversation.*
 
 ---
 
@@ -125,32 +125,35 @@ The reranker and the model dominate. Everything else was optimised until it stop
 
 ## Economics
 
-The fixed cost is one server and a domain; the rest is free, self-hosted, or billed per use. The prices are public list prices, not the company's invoices.
+The fixed cost is one server and a domain; the rest is free, self-hosted, or billed per use. The table gives public list prices, not the company's invoices; what was actually paid follows it.
 
 | Line | What ran | At handover (Aug 2026) | Now (Nov 2026) |
 |---|---|---|---|
-| Server | Contabo cloud VPS, 8 vCPU · 24 GB RAM | €14.00 a month (about $16) | €14.00 (about $15) |
-| Domain | `.com` at Namecheap | under $20 a year | $19.98 a year to renew; the registry's wholesale price rose 7% on 1 Nov 2026 |
-| LLM | Gemini 2.5 Flash | $0.30 per 1M input tokens · $2.50 per 1M output | Same rate. From 1 Dec 2026 Google retires 2.5 Flash and routes its calls to 3.5 Flash-Lite at the same rate; 3.6 and 3.8 Flash list at $0.75 · $3.75, rising to $1.50 · $7.50 on 1 Jan 2027 |
+| Server | Contabo cloud VPS, 8 vCPU · 24 GB RAM, EU region | €14.00 a month (about $16) | €14.00 (about $15) |
+| Domain | `.com` through Cloudflare, which sells domains at cost | $10.46 a year | $11.17 a year: the registry's wholesale price rose 7% on 1 Nov 2026 |
+| LLM | Gemini 2.5 Flash | Free tier: $0 within its rate limits, without context caching. Paid tier: $0.30 per 1M input tokens · $2.50 per 1M output | Same, free tier included. From 1 Dec 2026 Google retires 2.5 Flash and routes its calls to 3.5 Flash-Lite at the same rate; 3.6 and 3.8 Flash list at $0.75 · $3.75, rising to $1.50 · $7.50 on 1 Jan 2027 |
 | Embeddings | Gemini Embedding 2 | $0.20 per 1M tokens | Same |
 | WhatsApp | Twilio | $0.005 per message, in or out, plus Meta's fee on template messages | Same Twilio fee. Since 1 Oct 2026 Meta also charges for free-form replies beyond 1,000 a month per number |
 | Telegram | Bot API | $0 | $0 |
 | Edge | Cloudflare: WAF rules, Bot Fight Mode, one rate-limiting rule, Turnstile, Origin CA | $0: all on the free plan | $0 |
 | CI/CD | GitHub Actions · GHCR | $0 within the plan's included minutes, then $0.006 a Linux minute; image storage free | Same |
+| Secret scanning | GitGuardian | $0: the free plan, up to 25 developers | $0 |
 | Tracing | LangSmith | $0 up to 5,000 traces a month; Plus is $39 a seat | Same |
 | Development | The same stack on my own machine, behind a tunnel, with a Telegram development bot | $0: the tunnel's free plan | $0 |
 | Speech · guards · reranker · vector DB · cache · database · metrics and logs | Self-hosted on the server | $0 | $0 |
-| **Fixed, on the free tiers** | | **about $18 a month** | **about $17** |
+| **Fixed, on the free tiers** | | **about $17 a month** | **about $16** |
 
-Server prices are Contabo's EU-region list; its other regions add a location fee. Dollar figures use the ECB reference rate on 19 August and 17 November 2026; the euro price did not move.
+Dollar figures use the ECB reference rate on 19 August and 17 November 2026; the euro price did not move. The server first answered on a free DuckDNS subdomain, which went down from time to time. The domain replaced it, and in May 2026, during the attacks, went behind Cloudflare, whose free plan carries the edge protections above.
 
-**Per conversation.** The [model evaluation](03-models.md#so-i-measured-instead-of-arguing) projected $680 a month for 2.5 Flash at 1,000 conversations a day: about **2.3¢ a conversation** at list price, before prompt caching. With caching, the ~15k-token static prefix is billed at a tenth of the input rate, plus storage by the hour; the cost per conversation with the cache active [was never measured](03-models.md#where-it-stands--and-why-its-still-open). Images are billed as input tokens. Voice adds nothing, because speech is transcribed and synthesised on the server. On WhatsApp the channel can cost more than the model: at $0.005 a message, a ten-message exchange is 5¢ in Twilio fees. On Telegram it is free. Development traffic bills at the same rates: the whole 2.5 Flash leg of the evaluation, six runs of the integration suites, cost $2.22.
+**What was actually paid.** Four lines: the server, the domain, Twilio and Gemini. Production ran on Gemini's free tier and was billed only in the months when heavy prompt-testing runs, or [attack traffic built to drive up token costs](01-timeline.md#phase-5--security-under-live-fire-q2-2026), outgrew it. Twilio's prepaid balance was topped up twice, on heavy testing days. Everything else ran on free plans or open source.
+
+**Per conversation.** The [model evaluation](03-models.md#so-i-measured-instead-of-arguing) projected $680 a month for 2.5 Flash at 1,000 conversations a day: about **2.3¢ a conversation** at the paid rate, before prompt caching. With caching, which only the paid tier offers, the ~15k-token static prefix is billed at a tenth of the input rate, plus storage by the hour; the cost per conversation with the cache active [was never measured](03-models.md#where-it-stands--and-why-its-still-open). Images are billed as input tokens. Voice adds nothing, because speech is transcribed and synthesised on the server. On WhatsApp the channel can cost more than the model: at $0.005 a message, a ten-message exchange is 5¢ in Twilio fees. On Telegram it is free. Development traffic is priced the same way: at the paid rate, the whole 2.5 Flash leg of the evaluation, six runs of the integration suites, came to $2.22.
 
 **Against the alternatives**, at list prices on 18 November 2026. The fixed cost first:
 
 | Alternative | Monthly |
 |---|---|
-| **This system: the server and the domain** | **about $17** |
+| **This system: the server and the domain** | **about $16** |
 | The same 8 vCPUs on AWS (m7i.2xlarge, 32 GiB, on demand, us-east-1), the instance alone | $294 |
 | One full-time customer service representative at the US median wage | $3,731 |
 | Round-the-clock cover, one person at a time (4.2 full-time staff) | about $15,700 |
@@ -161,7 +164,7 @@ Then the model, at the token counts the evaluation measured on 2.5 Flash (64,640
 
 | Model, input · output per 1M tokens | Per conversation | Per month at 1,000 a day |
 |---|---|---|
-| **Gemini 2.5 Flash, as run: $0.30 · $2.50** | **2.3¢** | **$680** |
+| **Gemini 2.5 Flash, paid tier: $0.30 · $2.50** | **2.3¢** | **$680** |
 | Claude Sonnet 5.5 or GPT-6.2 Sol: $2 · $10 | 14.2¢ | $4,272 |
 | Claude Opus 5.5: $4 · $20 | 28.5¢ | $8,545 |
 | GPT-6.2 Astra: $8 · $40 | 57¢ | $17,089 |

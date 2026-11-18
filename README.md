@@ -1,6 +1,6 @@
 # Building a Transaction-Capable AI Agent Before There Was a Playbook
 
-### Engineering field notes from thirteen months building production agentic AI — CPU-only, about $18 a month plus a few cents per conversation
+### Engineering field notes from thirteen months building production agentic AI — CPU-only, about $17 a month plus a few cents per conversation
 
 <p align="center">
   <strong>Joshua Peter Polaprayil</strong> · Full-Stack AI Engineer<br/>
@@ -64,7 +64,7 @@ A production AI agent handling the complete eSIM customer lifecycle — discover
 | **Observability** | 51 application metrics · ~120-panel operator dashboard · 8 alert rules as code |
 | **Languages** | Agent mirrors the user's language · system text in 10 locales incl. RTL · speech voice map covers 32 languages |
 | **Hardware** | One 8 vCPU CPU-only VPS — no GPU, anywhere |
-| **Running cost** | **About $18 a month fixed**, development included, at handover list prices: one €14 server and a domain, with the dev tunnel, CI/CD, tracing and the edge on free tiers. On top, per use: about 2.3¢ of LLM per conversation before prompt caching, and $0.005 per WhatsApp message each way. Speech, guards, reranking and data stores are self-hosted, at $0 ([breakdown](docs/06-performance.md#economics)) |
+| **Running cost** | **About $17 a month fixed**, development included, at handover list prices: one €14 server and a $10-a-year domain, with the dev tunnel, CI/CD, secret scanning, tracing and the edge on free plans. On top, per use: about 2.3¢ of LLM per conversation at the paid rate, before prompt caching, though production ran mostly on Gemini's free tier; and $0.005 per WhatsApp message each way. Speech, guards, reranking and data stores are self-hosted, at $0 ([breakdown](docs/06-performance.md#economics)) |
 | **Recognition** | Selected **top 5 of 39** at an investor pitch · **#5** in F6S's AI company ranking for Sheridan, Wyoming, where the company is registered ([May 2026](#recognition)) |
 | **On the record** | **2,385** test messages exported from Telegram and WhatsApp, platform-timestamped, the wallet balance agreeing to the cent across both · native screenshots and original voice notes, hashed · [the exhibits](#from-the-test-logs) |
 
