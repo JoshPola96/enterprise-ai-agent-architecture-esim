@@ -134,24 +134,38 @@ The fixed cost is one server and a domain; the rest is free, self-hosted, or bil
 | LLM | Gemini 2.5 Flash | $0.30 per 1M input tokens · $2.50 per 1M output | Same rate. From 1 Dec 2026 Google retires 2.5 Flash and routes its calls to 3.5 Flash-Lite at the same rate; 3.6 and 3.8 Flash list at $0.75 · $3.75, rising to $1.50 · $7.50 on 1 Jan 2027 |
 | Embeddings | Gemini Embedding 2 | $0.20 per 1M tokens | Same |
 | WhatsApp | Twilio | $0.005 per message, in or out, plus Meta's fee on template messages | Same Twilio fee. Since 1 Oct 2026 Meta also charges for free-form replies beyond 1,000 a month per number |
-| Telegram · TLS · CI/CD | Bot API · free certificates · GitHub Actions | $0 | $0 |
-| Speech · guards · reranker · vector DB · cache · database | Self-hosted on the server | $0 | $0 |
-| **Fixed** | | **about $18 a month** | **about $17** |
+| Telegram | Bot API | $0 | $0 |
+| Edge | Cloudflare: WAF rules, Bot Fight Mode, one rate-limiting rule, Turnstile, Origin CA | $0: all on the free plan | $0 |
+| CI/CD | GitHub Actions · GHCR | $0 within the plan's included minutes, then $0.006 a Linux minute; image storage free | Same |
+| Tracing | LangSmith | $0 up to 5,000 traces a month; Plus is $39 a seat | Same |
+| Speech · guards · reranker · vector DB · cache · database · metrics and logs | Self-hosted on the server | $0 | $0 |
+| **Fixed, on the free tiers** | | **about $18 a month** | **about $17** |
 
-Dollar figures for the server use the ECB reference rate on 19 August and 17 November 2026; the euro price did not move.
+Server prices are Contabo's EU-region list; its other regions add a location fee. Dollar figures use the ECB reference rate on 19 August and 17 November 2026; the euro price did not move.
 
 **Per conversation.** The [model evaluation](03-models.md#so-i-measured-instead-of-arguing) projected $680 a month for 2.5 Flash at 1,000 conversations a day: about **2.3¢ a conversation** at list price, before prompt caching. With caching, the ~15k-token static prefix is billed at a tenth of the input rate, plus storage by the hour; the cost per conversation with the cache active [was never measured](03-models.md#where-it-stands--and-why-its-still-open). Images are billed as input tokens. Voice adds nothing, because speech is transcribed and synthesised on the server. On WhatsApp the channel can cost more than the model: at $0.005 a message, a ten-message exchange is 5¢ in Twilio fees. On Telegram it is free.
 
-For comparison — indicative estimates at equivalent capability, made at handover, not quotes:
+**Against the alternatives**, at list prices on 18 November 2026. The fixed cost first:
 
-| Approach | Monthly |
+| Alternative | Monthly |
 |---|---|
-| **This system** | **about $18 fixed, plus usage** |
-| Managed cloud equivalent (compute, managed DB, managed cache, managed vector) | $300–500+ |
-| Frontier-model API + hosted vector DB | $200–400 |
-| Human support team it replaces | $3,000–5,000 |
+| **This system: the server and the domain** | **about $17** |
+| The same 8 vCPUs on AWS (m7i.2xlarge, 32 GiB, on demand, us-east-1), the instance alone | $294 |
+| One full-time customer service representative at the US median wage | $3,731 |
+| Round-the-clock cover, one person at a time (4.2 full-time staff) | about $15,700 |
 
-That last row is the one that matters commercially. The fixed cost is under 1% of it, and the LLM adds about $23 per thousand conversations before caching. The self-hosted speech stack matters here too: per-minute STT and TTS billing would have been the single fastest-growing line item as voice adoption increased, and it's $0.
+The AWS row buys the same vCPU count, not the same performance per core, and managed Postgres, Redis, vector search and storage would come on top. The wage rows are pay alone (BLS, May 2025: $44,770 a year), before employer costs.
+
+Then the model, at the token counts the evaluation measured on 2.5 Flash (64,640 input and 1,313 output per conversation), before caching:
+
+| Model, input · output per 1M tokens | Per conversation | Per month at 1,000 a day |
+|---|---|---|
+| **Gemini 2.5 Flash, as run: $0.30 · $2.50** | **2.3¢** | **$680** |
+| Claude Sonnet 5.5 or GPT-6.2 Sol: $2 · $10 | 14.2¢ | $4,272 |
+| Claude Opus 5.5: $4 · $20 | 28.5¢ | $8,545 |
+| GPT-6.2 Astra: $8 · $40 | 57¢ | $17,089 |
+
+Each provider's tokenizer counts the same text differently, and a stronger model may need fewer turns, so the last three rows are indicative; the [evaluation](03-models.md#so-i-measured-instead-of-arguing) has the measured Gemini alternatives. The fixed cost is about 6% of the bare AWS instance and about 0.1% of round-the-clock human cover; the model is the line that grows with traffic. The self-hosted speech stack matters here too: per-minute STT and TTS billing would have been the single fastest-growing line item as voice adoption increased, and it's $0.
 
 The engineering point underneath the economics: none of this required exotic optimisation. It required refusing to reach for a managed service every time something got slightly hard, and being willing to quantize, cache, and measure instead.
 

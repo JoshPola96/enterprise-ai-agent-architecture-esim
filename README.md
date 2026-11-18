@@ -182,7 +182,7 @@ An engineering narrative, split by theme. Start anywhere — each part stands on
 | **03** | [**Models, Temperature & Attention**](docs/03-models.md) | A 24-run model evaluation, why the decision stayed open, and the wrong-product-ID failure that no prompt or temperature setting could fix. |
 | **04** | [**Evaluation, Testing & Delivery**](docs/04-engineering.md) | Offline MLOps, the test layers, contract tests for silent drift, the incident that redefined "tested", and the delivery pipeline. |
 | **05** | [**System Architecture**](docs/05-architecture.md) | The agent loop, the sixteen-section system prompt, hybrid retrieval, the data layer, and the full technology stack. |
-| **06** | [**Performance & Economics**](docs/06-performance.md) | Measured latency across the whole request path, with provenance, and what running all of it costs, line by line, at handover and now. |
+| **06** | [**Performance & Economics**](docs/06-performance.md) | Measured latency across the whole request path, with provenance, and what running all of it costs, line by line, at handover and now, against cloud, frontier-model and human alternatives. |
 | **07** | [**Limitations, Next Steps & Lessons**](docs/07-reflections.md) | What was still open at handover, the prioritised work that came next, how the system is governed, and what I'd tell someone starting this today. |
 
 **Deep dives, outside the seven-part narrative:**
