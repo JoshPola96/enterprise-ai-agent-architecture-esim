@@ -179,6 +179,16 @@ quadrantChart
 
 **Get the terms in writing while the goodwill is still there.** The most durable career lesson from this engagement isn't technical. Value that everyone verbally agrees is real — a build worth a great deal more than what changed hands for it — is worth exactly what's *documented* when the relationship is under strain, which is often nothing. Scope, ownership, compensation, and what happens to your work if payment stops: settle those in a signed document early, when everyone's aligned and optimistic, not later when they're not. Goodwill is not a contract, and "there's a plan for everyone once it grows" is not a term. This isn't cynicism; it's the same *resolve-the-fact-before-you-rely-on-it* discipline the rest of this document preaches, applied to your own position.
 
+**Keep your own record, as you go.** Export the test conversations, keep the voice notes as files, screenshot in the app itself, and hash all of it while it is fresh. Every exhibit in this paper exists because the record was kept while the work was happening, not reconstructed afterwards ([the record](../README.md#from-the-test-logs), [how each exhibit was made](test-log/PROVENANCE.md)). A dated, hashed record answers questions that memory and goodwill cannot.
+
+**Snapshot the documentation you build against.** An API's documentation can change without notice, and when an integration breaks, the first question is whether the code moved or the contract did. Keep a dated copy of every schema and example you implement from, and of the real requests and responses you saw. The [observed contract](04-identity.md#the-upstream-contract-as-actually-observed) in this paper is that habit's output.
+
+**Write the incident down the day it happens.** Timestamps, request identifiers, the exact error, what you tried. The flow deleted in [04](04-identity.md#the-incident-that-redefined-tested) went with three request IDs on record, the last within 75 seconds of issue. A report written that day settles what a discussion weeks later cannot.
+
+**Agree what "working" means before you are measured on it.** When the outcome you are judged on runs through a system you don't own, name the boundary in writing: what your layer sends, what it receives, and what it logs. Then "it works" can be checked at your side of the line, and a failure on the other side cannot quietly become yours.
+
+**Ask for a way to test what you depend on, and keep the request on record.** Without a staging line or a stress test for the upstream, the first test of its every change is production. The written request is what shows, later, where that risk was known to sit.
+
 **Constraints are a design tool.** Nearly every decision I'm proudest of exists because the cheap path was closed. A CPU-only budget forced quantized inference, layered caching, and honest trade-offs. I'd take that pressure again deliberately.
 
 ---

@@ -51,6 +51,8 @@ The inverse principle mattered just as much: the agent is *led by* the API respo
 
 Throughout, the original failed request stays queued as a pending intent, so whichever rung of the ladder the user comes back on, their request executes automatically.
 
+The links themselves are short-lived: a pending login lasts 15 minutes and a signup link 30, and asking for a fresh signup link invalidates the one before it. So when a link has expired, the agent issues a new one and says it has, rather than sending the user back to a link that no longer works.
+
 <p align="center">
   <img src="images/latest_login_flow_ss_2.jpeg" alt="WhatsApp screenshot showing an expired login link automatically replaced with a fresh one on the real esimtime.com domain, followed by a successful login" width="320"/>
   <br/>
@@ -92,6 +94,8 @@ Both windows are ten minutes. The decision itself always comes back definite, as
 ## How Long a Session Lasts
 
 **Session lifetime — a two-clock model.** Sessions run on a 90-day rolling inactivity window, but the expiry ceiling is recomputed on every message as the *earlier* of the new inactivity horizon and the upstream access token's own expiry claim. A frequent user stays authenticated indefinitely; a session can never outlive a revoked token. Whichever clock runs out first wins. A genuinely expired token soft-invalidates and triggers background re-authentication rather than surfacing an error, and a short in-process debounce cache prevents redundant session lookups during multi-tool turns — particularly during priority-authentication turns where a login and its dependent tools all execute together.
+
+**A session also ends whenever the user says so.** Phone numbers change hands and phones are lent, so a request to log out, or to hand the chat to someone else, is honoured every time: never argued with, confirmed in one line, and followed by no further action on that account.
 
 ---
 
@@ -147,7 +151,7 @@ Not "the test passes". Not "the response was 200". *Go and look at what the acco
 - **A confirmation ID is returned even for an address that doesn't exist**, so its presence proves nothing about whether a code was sent — a false signal any reasonable implementation would trust.
 - **One upstream endpoint wasn't behaving as documented at the time** — it rejected valid, freshly issued codes on every attempt (reproduced with three separate request IDs, the last within 75 seconds of issue) while returning success on the request that should have sent them. That combination is what made it take a day to isolate rather than an hour.
 
-That last one produced the decision I'm most pleased with: rather than building a workaround, **the entire flow was deleted**. Logging in already did the job. A broken dependency and a redundant feature turned out to be the same problem, and the fix was removal. With it gone, the password-reset chain became the only self-service account-recovery route left, which raised the stakes on that chain considerably.
+That last one produced the decision I'm most pleased with: rather than building a workaround, **the entire flow was deleted**. Logging in already did the job. A broken dependency and a redundant feature turned out to be the same problem, and the fix was removal. With it gone, the password-reset chain became the only self-service account-recovery route left, which raised the stakes on that chain considerably. The prompt's rule for that chain: a reset that fails on the server's side has burnt its session, so it is never retried with the same handle; a fresh code is requested, and after a second failure the agent stops retrying, says the reset is down for now, and offers password login to anyone who still knows their password.
 
 **The transferable version.** Mocks encode your beliefs about a system. If the belief is wrong, the mock is wrong, the test is wrong, and the suite's greenness is actively misleading — worse than no tests, because it manufactures confidence. Mocks are for testing *your* logic. They cannot validate your understanding of someone else's system. Only contact with the real thing does that, and only if you look at the state afterwards rather than the status code.
 

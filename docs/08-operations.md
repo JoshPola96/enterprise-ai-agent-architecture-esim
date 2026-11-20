@@ -76,7 +76,7 @@ Two named components carry most of the session and memory work: **`SessionManage
 
 What's actually in each store, beyond the one-line summary: **PostgreSQL** holds users and sessions, conversation history, the audit log, LangGraph's own checkpoints, and billing IDs. **Redis** holds the identity cache, working memory, rate-limit counters, the notification stream, pending intents, distributed locks, and the dead-letter queue. **Qdrant** holds knowledge-base vectors, conversation memories, and serves the hybrid search described in [Memory and Knowledge](03-memory.md#native-hybrid-search).
 
-Every server process runs the same three things: the webhooks, the two stream workers, and the agent behind a concurrency limit. That is why a single image can scale by adding processes, and why the heavy models are loaded once and shared rather than once per process. In numbers: two agent runs at a time per worker, eight across the four workers.
+Every server process runs the same three things: the webhooks, the two stream workers, and the agent behind a concurrency limit. That is why a single image can scale by adding processes, and why the heavy models are loaded once and shared rather than once per process. Each process allows two agent runs at a time, and four processes run, so eight at once. A turn holds a model call, a database connection and retrieval work together, so a burst beyond that waits in line instead of thrashing the process; on shutdown the process takes back every slot, waiting up to 20 seconds, so turns already running finish instead of being cut off mid-tool-call.
 
 ---
 
@@ -208,7 +208,7 @@ xychart-beta
     bar [3.3, 5.3, 7.4, 9.4, 11.4, 14]
 ```
 
-Sizing to the *recycle peak* rather than the steady state, with headroom above it, is the difference between a stable deploy and one that dies during a rolling restart. In numbers: the application container is limited to 14 GB, about 23% above the 11.4 GB recycle peak, with swap disabled.
+Sizing to the *recycle peak* rather than the steady state, with headroom above it, is the difference between a stable deploy and one that dies during a rolling restart. The application container's limit is 14 GB, about 23% above the 11.4 GB recycle peak, with swap disabled.
 
 ### Measuring instead of assuming
 
@@ -305,7 +305,7 @@ Plus purpose-built retrieval telemetry: every retrieval or rerank stage returnin
 
 ### The dashboards were lying, and I only found out by asking them
 
-The operator dashboard reads top-down for a non-technical audience — service health, then capacity, customers, abuse, assistant quality, knowledge gaps, channel mix, revenue funnel, infrastructure, the monitoring stack's own health, and live logs. Around 120 panels. It looked excellent.
+The operator dashboard reads top-down for a non-technical audience — service health, then capacity, customers, abuse, assistant quality, knowledge gaps, channel mix, revenue funnel, infrastructure, the monitoring stack's own health, and live logs. 111 panels in eleven rows. It looked excellent.
 
 Then I wrote a script that executed **every panel's real query** through the visualisation layer's own query API — exactly the path the browser takes — rather than parsing the dashboard definition.
 
@@ -336,7 +336,7 @@ Alerting is provisioned as code alongside the dashboards — availability, agent
 
 ### Metrics that exist before the event
 
-Prometheus's own guidance is to [initialise known label values to zero](https://prometheus.io/docs/practices/instrumentation/#avoid-missing-metrics), because a labelled series does not exist until its first event, and a panel over it reads "No data". That is the start-up touch in [above](#the-dashboards-were-lying-and-i-only-found-out-by-asking-them). The same guidance warns against enumerating unbounded labels just to get zeros; 01's rule is to seed only the values registered in the start-up block, and to register every new one there.
+Prometheus's own guidance is to [initialise known label values to zero](https://prometheus.io/docs/practices/instrumentation/#avoid-missing-metrics), because a labelled series does not exist until its first event, and a panel over it reads "No data". That is the start-up touch described [above](#the-dashboards-were-lying-and-i-only-found-out-by-asking-them). The same guidance warns against enumerating unbounded labels just to get zeros; 01's rule is to seed only the values registered in the start-up block, and to register every new one there.
 
 ---
 

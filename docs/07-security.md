@@ -426,6 +426,9 @@ Middleware catches what patterns can catch. The agent sees *meaning*. So the mod
 - Injection attempts that slipped past the classifier — **including ones smuggled in through a voice transcription or text embedded in an uploaded image**
 - Conversational signatures of coordinated farming
 - Media-specific abuse — synthetic or abusive audio, explicit or malicious imagery
+- A second account attempted when one is already on file, fake contact details given again and again, or the same nonsense query looped ten times or more
+
+Some screening never reaches a flag. Disposable email domains and temporary numbers are declined quietly, with a plain request for a standard address. A fictional destination is answered without any tool being called. A request that is half public and half account-bound gets the public half answered and the login named for the rest.
 
 ```mermaid
 flowchart LR
