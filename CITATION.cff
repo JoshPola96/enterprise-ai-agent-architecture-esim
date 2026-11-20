@@ -1,0 +1,24 @@
+# CITATION.cff
+cff-version: 1.2.0
+message: "If you cite this case study, please cite it as below."
+title: "Building a Transaction-Capable AI Agent Before There Was a Playbook"
+abstract: >-
+  An engineering case study of a production conversational agent that sold and
+  provisioned eSIMs inside WhatsApp and Telegram, built and operated from July 2025
+  to August 2026 on CPU-only infrastructure: architecture, security, evaluation,
+  performance and economics, a catalogue of the failures it recorded, and the
+  sources it draws on.
+authors:
+  - given-names: Joshua Peter
+    family-names: Polaprayil
+repository-code: "https://github.com/JoshPola96/enterprise-ai-agent-architecture-esim"
+url: "https://github.com/JoshPola96/enterprise-ai-agent-architecture-esim"
+license: MIT
+keywords:
+  - agentic AI
+  - LLM agents
+  - conversational commerce
+  - prompt injection
+  - retrieval-augmented generation
+  - distributed systems
+  - eSIM
