@@ -1,3 +1,4 @@
+<!-- docs/07-security.md -->
 [&larr; Back to the case study](../README.md)
 
 # Security Architecture — A Deep Dive
@@ -23,7 +24,8 @@
 13. [Tokens, Sessions and Revocation](#13-tokens-sessions-and-revocation)
 14. [Operator Tooling](#14-operator-tooling)
 15. [Validation Under Attack](#15-validation-under-attack)
-16. [Lessons That Generalise](#16-lessons-that-generalise)
+16. [Case by Case: Every Path Into the Agent](#16-case-by-case-every-path-into-the-agent)
+17. [Lessons That Generalise](#17-lessons-that-generalise)
 
 > **On the numbers.** Thresholds below are the configured defaults at handover in August 2026. They were tuned against observed production traffic — including real, sustained attack traffic the platform took once it went public — and are documented here as reference points for anyone building something similar, not as universal constants.
 
@@ -55,7 +57,7 @@ Every layer below was designed against that test:
 - Injection is **classified and rejected before inference**, not politely declined by the model.
 - Spoofed system tags are **stripped structurally**, not detected semantically.
 - The honeypot doesn't *ask* whether a client is a bot; it makes bots **identify themselves**.
-- PII can't reach an index in plaintext because **the schema makes it impossible**, not because a query was written carefully.
+- PII can't reach a database index in plaintext because **the schema makes it impossible**, not because a query was written carefully.
 - Infrastructure failures in a security path **fail closed**.
 - Automated classifiers **terminate in human review** before they can block anyone.
 
@@ -130,7 +132,7 @@ The numbered layers are the host-level defence table from the operations runbook
 
 **Signature validation behind a reverse proxy has a trap.** The HMAC covers the original public URL. Behind Nginx the app sees an internal URL, so every signature check fails. The validator reconstructs the original URL from `X-Forwarded-Proto` and `X-Forwarded-Host` — a genuinely confusing first-deployment failure if you don't know to expect it.
 
-**Every IP-keyed control depends on restoring the real client IP.** Behind a CDN, every request arrives from an edge node, so a naive per-IP limit would throttle the CDN itself and a ban would block a data centre. Nginx trusts the CDN's published address ranges and restores the client address from the CDN's connecting-IP header; the edge node's address is kept in a separate variable for auditing. Access logs are structured JSON recording both, so an incident review can distinguish *who* sent a request from *which edge* carried it.
+**Every IP-keyed control depends on restoring the real client IP.** Behind a CDN, every request arrives from an edge node, so a naive per-IP limit would throttle the CDN itself and a ban would block a data centre. Nginx trusts the CDN's published address ranges and restores the client address from the CDN's connecting-IP header; the edge node's address is kept in a separate variable for auditing. Access logs are structured JSON recording both, so an incident review can distinguish *who* sent a request from *which edge* carried it. Inside the application, one function derives the client address for both the blacklist and the rate limiter: the CDN's header first, then the proxy's, then the socket. They have to agree, because if they derived it differently, a request without the CDN header would fall through to the proxy's own address in one of them, and every user behind that proxy would share a single bucket.
 
 **The origin refuses to be reached around the edge.** TLS runs in full-strict mode with an origin certificate the CDN validates. Requests that hit the server's IP directly land in a default catch-all server block and are dropped unless they present the CDN's own client certificate — so the WAF, bot controls and edge rate limits can't be bypassed by anyone who discovers the origin address.
 
@@ -237,7 +239,7 @@ Every inbound message passes through a central per-user gate before the agent. I
 | Payload fast-fail | 2,500 characters | Rejects oversized input before any expensive check |
 | OTP fast-exit | Numeric codes bypass rate limits entirely | A user retyping a code shouldn't be punished by anti-spam machinery |
 
-Both windows are Redis sorted-set sliding windows, shared across all workers.
+Both windows are Redis sorted-set sliding windows, shared across all workers. The checks are pipelined, so a message costs two Redis round-trips rather than about six.
 
 ### Offence escalation
 
@@ -336,10 +338,15 @@ flowchart TD
 1. **Under five characters** passes without inspection. Too short to carry a structured injection, and scanning "ok" on every turn is pure cost.
 2. **A compiled allowlist** passes obviously safe input — greetings, OTP codes, email addresses — at effectively zero cost. It uses `fullmatch`, not `search`: the *whole* input must be benign, so an injection appended to a greeting doesn't ride through on the greeting.
 3. **A heuristic list** blocks known-bad phrasing outright, without the model:
+
    - Injection phrasing — *ignore previous*, *system prompt*, *developer mode*
+
    - Shell and probing attempts — `curl`, `bash -c`, `sudo`
+
    - Backend reconnaissance — *API version*, *endpoint url*, *database schema*
+
    - Persona hijacking — *as an admin*, *override security*
+
    - Spanish-language equivalents — *ignora las instrucciones*, *olvida las reglas*
 
 Only what survives all three reaches the classifier.
@@ -574,7 +581,7 @@ Two protections exist for the same reason:
 
 **Degraded mode is not no-mode.** If scrubbing is called before the pipeline finishes initialising, it falls back to regex email redaction rather than passing text through untouched. Partial protection beats none on the path where a leak is permanent.
 
-**Scrubbing guards what is stored, not what the model sees.** The pipeline cleans text on its way to logs and memory; it does nothing for a secret already in the live conversation. The production log has the case — the agent quoting a verification code back three days after delivering it — written up in the [README](../README.md#case-study-the-verification-code-the-agent-repeated). Secrets are kept from the model by routing them around it, not by redacting them afterwards.
+**Scrubbing guards what is stored, not what the model sees.** The pipeline cleans text on its way to logs and memory; it does nothing for a secret already in the live conversation. The production log has the case — the agent quoting a verification code back three days after delivering it — written up in the [README](04-identity.md#case-study-the-verification-code-the-agent-repeated). Secrets are kept from the model by routing them around it, not by redacting them afterwards.
 
 ### The threshold bug worth remembering
 
@@ -607,6 +614,8 @@ The rule enforced throughout: never query the encrypted column, always query its
 Revocation was originally keyed on the JWT `jti` claim — the obvious design. But the upstream issuer's tokens carried no `jti` at all. So the blacklist was never written to and never consulted: logout returned success and revoked nothing. A token kept working after logout, and no test caught it, because every test asserted that the logout *call* succeeded rather than that the token *stopped working*.
 
 The fix is a single revocation-ID function: use the `jti` when present, otherwise a SHA-256 digest of the token itself, truncated to fit the column. Every code path that blacklists or checks a token goes through it. An empty revocation ID is treated as **revoked**, so a malformed token fails shut.
+
+**Token values never reach a log line, even truncated.** Any argument key containing the word "token" is logged only as a character count. Not the first few characters, not a hash — a count. The debugging value of a redacted-but-present token is close to zero anyway, and a count is enough to confirm one was present without ever putting the value itself somewhere a log-aggregation tool, a support screenshot, or a careless grep could surface it.
 
 ### Dual-path verification
 
@@ -680,7 +689,71 @@ Sixty seconds of mixed traffic against the Telegram webhook endpoint of the full
 
 ---
 
-## 16. Lessons That Generalise
+## 16. Case by Case: Every Path Into the Agent
+
+The sections above are organised by layer. This one is organised by input: each way text, sound or an image reaches the model, what screens it, what limits the damage when screening misses, and where it stood at handover. The last table maps the system against the [OWASP Top 10 for LLM Applications, 2025 edition](https://genai.owasp.org/2024/11/17/owasp-reveals-updated-2025-top-10-risks-for-llms-announces-new-llm-project-sponsorship-program-and-inaugural-sponsors/), for readers who think in that vocabulary.
+
+### Who can write to the model
+
+Three authors, and only three:
+
+- **The user:** what they type, say or photograph, and two things derived from it: their stored memories, and the name on the account they registered.
+- **The operator:** the system prompt, the knowledge base, the product catalogue, and the announcements staff broadcast.
+- **The system:** event notices, the replay of a message held at the human gate, and the per-turn Live Context block.
+
+No tool reads anything a third party wrote. None of the 26 browses the web, opens an inbox or loads a shared document; they read the operator's catalogue, the user's own account through that user's session, and the curated knowledge base. So indirect prompt injection in its usual form, where an outsider plants instructions in content the agent later reads ([Greshake et al., 2023](https://arxiv.org/abs/2302.12173)), has no channel of its own here. Outside text arrives only when a user chooses to send it, and then it is that user's input.
+
+That bounds what an injection can reach. Simon Willison's [lethal trifecta](https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/) names the combination that turns injection into theft: private data, untrusted content, and a way to send data out. Here the only untrusted author is the user in the session, and the private data within the agent's reach is that user's own, fetched with that session's token. An injection can still do harm: spend the operator's tokens, probe for the prompt, chase the welcome gift a second time, or put words in the agent's mouth for a screenshot. It cannot use the model to read another customer's account.
+
+### Path by path
+
+| Path | What screens it | What limits it if screening misses | At handover |
+|---|---|---|---|
+| **Typed text** | Webhook signature, honeypot, coalescing; then the behavioural gate (rates, repeats, the 2,500-character cap, spoofed `[SYSTEM…]` blocks stripped) and, from 16 May, the semantic gate | Tool gates in code: whitelist, schemas, auth per tool, a purchase only for the product and price just shown; the agent's flag tool | The main path, and the most defended |
+| **Voice note** | The webhook body is audio, so the transcript goes through the semantic gate after transcription | As for text; a refusal goes out as text, never synthesised | Screened |
+| **Image** | A size cap. No classifier reads text inside an image | The model's own judgement; its flag tool, whose instructions name text embedded in an image; the tool gates | Screened by the model alone |
+| **A message held at the human gate** | Held before the gates run, and replayed once the user passes, behind a system-state prefix | A held voice note replays as voice, so its transcript is screened. Held text replays as a system event, which neither gate inspects: one message per pass, from someone who has just passed the human gate | Held text unclassified |
+| **A message that meets an expired session** | The behavioural gate; then the re-login flow takes it, before the semantic gate | Its first 300 characters ride in the re-login notice as the user's pending request, labelled as context to hold and not yet to act on | Unclassified, marked as the user's request |
+| **System events:** payments, provisioning, codes, broadcasts | Not user input. They come from the backend and from staff through the notification stream, not through the webhooks | Each event type has its own framer and instructions; an unknown type delivers nothing; a broadcast is relayed as the agent's own words and framed as not something the user said | Operator-authored |
+| **Tool results and the knowledge base** | Operator data: the catalogue, the user's own records, curated documents | One failure envelope for every tool; product results formatted at the tool boundary; the Truth Horizon rule puts live results above history and memory | No third-party content |
+| **Stored memories and the account name** | Memories are written only from turns that ran, so never from a message the gates stopped, and are PII-scrubbed on the way in | Recalled for this user only; live tool results outrank them; no gate in code reads them | Not re-screened when recalled: see below |
+
+### Memory: an injection that outlives its turn
+
+Memory poisoning is the agent-specific form of injection: text that persuades once, is stored, and persuades again later without passing the door a second time. Microsoft's AI Red Team gave it a case study in its [taxonomy of failure modes in agentic AI](https://www.microsoft.com/en-us/security/blog/2025/04/24/new-whitepaper-outlines-the-taxonomy-of-failure-modes-in-ai-agents/) (April 2025), and its [June 2026 update](https://www.microsoft.com/en-us/security/blog/2026/06/04/updating-taxonomy-failure-modes-agentic-ai-systems-year-red-teaming-taught-us/), drawn from a year of engagements against deployed agents, reports it among the failures seen most often, frequently together with cross-prompt injection.
+
+As built:
+
+- **What is stored.** Each turn the agent ran: the user's message, scrubbed of PII and of spoofed system-state tags, with the agent's reply beside it, in that user's episodic store ([§12](#12-data-protection), [03](03-memory.md#retrieval-architecture)). A message the gates stopped never reached the agent, so it never reached memory.
+- **How it comes back.** Retrieved by similarity for that user only, and joined into the Live Context block every turn, each memory labelled with who said it: "User:" for the message, "Assistant:" for the reply.
+- **The authority it travels with.** The Live Context header calls the block system-authored state, not user speech, carrying the authority of everything above it. With the prompt cache active the block travels as a user turn, and the header claims that authority to make up for the demotion ([02](02-agent.md#the-system-prompt)). The memories inside are the user's own past words, labelled line by line, and the prompt's only instructions about them are to apply them without narrating them and to re-check live data rather than trust them. Nothing marks them as data rather than direction. In this paper's own terms, the line between a remembered user message and system state is drawn by a sign, not a door.
+- **What bounds it.** Retrieval is filtered per user, so a poisoned memory reaches only its author's later sessions. From 16 May everything stored had passed the classifier when it was sent, so a stored payload is one that got past the classifier once; it is not screened again when recalled. And the gates that matter are code: the auth gate, the schemas and the purchase check never consult memory. A memory can change what the agent says, not what a tool will accept.
+- **What was not there at handover.** Recalled memories were not delimited or marked as data, the family of techniques [Hines et al. (2024)](https://arxiv.org/abs/2403.14720) call spotlighting, and they were not re-screened.
+
+### Detecting injection, or designing it out
+
+Simon Willison has long argued that a detector is not a defence: [in application security, 99% is a failing grade](https://simonwillison.net/2023/May/2/prompt-injection-explained/), because the attacker searches for the 1%. The design literature answers by constraining the agent instead. [Beurer-Kellner et al. (2025)](https://arxiv.org/abs/2506.08837) give patterns that stop untrusted input, once read, from triggering consequential actions. [CaMeL (Debenedetti et al., 2025)](https://arxiv.org/abs/2503.18813) separates control flow from data flow so that retrieved text cannot change what the program does.
+
+The system does both, and the path table above states where each applies. The semantic gate detects. The gates in code (the tool whitelist, authentication per tool, a purchase only for the product and price just shown) bound the damage when detection misses. The design literature's starting point, untrusted content arriving through the agent's tools, applies only weakly here: no tool reads third-party content, so the untrusted author is the user, whose reach is their own account.
+
+### Against the OWASP Top 10 for LLM Applications (2025)
+
+| Risk | How the system meets it | Open at handover |
+|---|---|---|
+| **LLM01 Prompt Injection** | The pre-inference gates of [§5](#5-the-human-gate)–[§8](#8-adversarial-instrumentation); spoof stripping; the agent's flag tool; no channel for third-party content | Images, held text, the re-login request and recalled memories reach the model without the classifier |
+| **LLM02 Sensitive Information Disclosure** | PII scrubbed before logs and memory; Fernet at rest with HMAC lookup twins ([§12](#12-data-protection)); one-time codes delivered beside the agent, not through it, from 29 May; tokens never logged ([§9](#9-input-validation-as-an-abuse-signal)) | Scrubbing guards what is stored, not what the model sees ([§12](#what-deliberately-isnt-scrubbed)) |
+| **LLM03 Supply Chain** | Every local model is downloaded, exported and quantized at build time, so nothing is fetched at runtime; the classifier's malicious label is read from the model's own config; deploys verify the image hash; secret scanning on the repository | — |
+| **LLM04 Data and Model Poisoning** | The risk classifier: conduct features, labels kept apart from their own inputs, human labels preserved, promotion gates, inference off until a person turns it on ([§11](#11-ml-risk-scoring)); the knowledge base is the operator's own files | Episodic memory, above |
+| **LLM05 Improper Output Handling** | One output channel, the response wrapper; a link is delivered only if it is a well-formed http(s) URL; a voice reply carrying a link, a list, prices or a code is sent as text; replies reach the platforms through per-platform formatters, and nothing the model writes is run as code | Links were checked for form, not destination |
+| **LLM06 Excessive Agency** | Whitelist and schema checks in code; auth checked per tool; a purchase refused unless product and price match what was shown; in the prompt, one payment action per turn, per-turn call ceilings, a two-strike stop and a mandatory checkout summary | On 28 December 2025, before the prompt was hardened, a claim of authority was acted on ([§10](#on-the-record-im-your-dev)) |
+| **LLM07 System Prompt Leakage** | The heuristic list blocks "system prompt" phrasing; probing for the prompt is a flag trigger; the prompt holds no keys or credentials, only per-turn state | — |
+| **LLM08 Vector and Embedding Weaknesses** | Episodic search filtered per user; the query-vector cache namespaced by embedding model, so a model change cannot serve vectors from the wrong space ([03](03-memory.md#native-hybrid-search)); the knowledge base indexed from operator files under a content hash | — |
+| **LLM09 Misinformation** | The Truth Horizon rule; no invented prices, IDs or codes; a confidence scale with a floor below which the agent asks rather than answers; product results formatted at the tool boundary | The recorded failures, from the [wrong product ID](02-agent.md#temperature-attention-and-the-wrong-product-id) on, are told in the chapters where they happened, and what they show together is in [Reflections](10-reflections.md#what-the-incidents-show) |
+| **LLM10 Unbounded Consumption** | The 2,500-character cap; burst and sustained windows; 15 messages a minute per chat; coalescing; per-turn call ceilings; the graph's recursion limit; the image size cap; inline classification tested under 30 concurrent attackers ([§15](#15-validation-under-attack)) | Attack traffic built to drive up token costs outgrew the free tier in some months ([09](09-evidence.md#economics)) |
+
+---
+
+## 17. Lessons That Generalise
 
 **Security has to be architectural, then provable.** Rate limiting bolted on after launch is a patch. Pre-inference classification, isolated networking and fail-closed defaults are structure. Then load-test it adversarially, because an untested guard layer is a hypothesis.
 

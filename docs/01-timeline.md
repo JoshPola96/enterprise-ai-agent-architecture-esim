@@ -1,3 +1,4 @@
+<!-- docs/01-timeline.md -->
 [&larr; Back to the case study](../README.md)
 
 # Timeline — Seven Phases of Production Agentic AI
@@ -57,7 +58,7 @@ That constraint became the most productive design pressure in the project. It cl
 
 In practice: every transformer in the request path quantized to INT8 and served through ONNX Runtime on CPU, and speech-to-text run through CTranslate2 at int8, rather than reaching for GPU inference. A two-tier query-embedding cache so repeat queries never touch the network. Retrieval fused server-side in the vector database rather than merged in application code. Speech models chosen by measured RTF-and-RSS trade-off rather than by reaching for the largest available.
 
-The result is a stack where infrastructure overhead is small relative to model inference — not because the hardware is fast, but because nothing in the path is allowed to be wasteful. (Actual production timings, and where they diverge from bench measurements, are in [Performance](06-performance.md#performance).)
+The result is a stack where infrastructure overhead is small relative to model inference — not because the hardware is fast, but because nothing in the path is allowed to be wasteful. (Actual production timings, and where they diverge from bench measurements, are in [Performance](09-evidence.md#performance).)
 
 I think this is the more interesting engineering problem, and the more transferable one. Anyone can make a system fast with money. Making it fast without any is where the decisions actually live.
 
@@ -81,7 +82,7 @@ It was also unusable in production.
 
 **Finding:** multi-agent coordination is a real pattern with real uses. For a single coherent conversational domain it solved a problem I didn't have while creating one I couldn't afford.
 
-**A parallel research excursion, alongside the multi-agent question.** In my own time, separate from what was scoped to ship, I also prototyped a more literal implementation of the Mem0 technique this system cites as inspiration — an LLM-synthesised "biography" of each user, refreshed under a distributed lock, alongside a "scratchpad" that re-derived the current conversational goal and any auth-blocked pending intents fresh on every turn. A genuinely more faithful reading of the cited research than what shipped. Retired anyway, because direct retrieval produces most of the same value as a side effect of a single search call rather than two or three extra model calls — full mechanism, and why, in [Research Notes](08-research-notes.md#ii-the-synthesised-memory-design--and-a-more-faithful-reading-of-mem0).
+**A parallel research excursion, alongside the multi-agent question.** In my own time, separate from what was scoped to ship, I also prototyped a more literal implementation of the Mem0 technique this system cites as inspiration — an LLM-synthesised "biography" of each user, refreshed under a distributed lock, alongside a "scratchpad" that re-derived the current conversational goal and any auth-blocked pending intents fresh on every turn. A genuinely more faithful reading of the cited research than what shipped. Retired anyway, because direct retrieval produces most of the same value as a side effect of a single search call rather than two or three extra model calls — full mechanism, and why, in [Research Notes](11-research-notes.md#ii-the-synthesised-memory-design--and-a-more-faithful-reading-of-mem0).
 
 ---
 
@@ -95,9 +96,7 @@ Alongside: migration to Gemini Flash for context capacity and native tool callin
 
 **Result: ~60% latency reduction.** 8–12 seconds became 3–5.
 
-The retrieval stack has its own story, because I worked on it from the very first day and kept refining it to the end. It began as a hand-built hybrid — BM25 with reciprocal-rank fusion and a cross-encoder reranker — on top of Chroma. That validated the approach but left me maintaining a sparse index, its serialisation, and its cross-worker synchronisation by hand. Swapping the vector store to **Qdrant**, chosen because it was natively async and could compute hybrid search server-side, collapsed all of that machinery into the database: sparse and dense vectors, IDF weighting and RRF fusion all became native, and an entire class of multi-worker consistency bug disappeared. It's one of the cleanest retrieval designs I know of running today, and the simplification was the whole point rather than a side effect. The knowledge base itself came from the company's own material — troubleshooting guides, installation steps, operator lists, plan catalogues — converted to Markdown and put through many rounds of ingestion, chunking and tuning, with the embedding model, the reranker and the sparse method all swapped as better options appeared. The full present-day design is in [System Architecture](05-architecture.md#retrieval-architecture). One late refinement had an unlikely trigger: in an interview, an engineer insisted TF-IDF was the state of the art for retrieval. It isn't — BM25 superseded it for search decades ago, fixing exactly its document-length and term-saturation weaknesses — but the exchange sent me back into the literature, and that reading is what led me to drop a separately-run SPLADE step in favour of Qdrant's own native BM25-plus-RRF as the v2 embedders landed. A wrong claim from someone else, checked properly, improved the system.
-
-Embedding and query-vector caching came later, and for a reason worth recording: attackers ran high-volume "mill" traffic specifically to drive up token cost, and caching the embedding work blunted it. That is a recurring theme of this project — several defensive features were shaped by live abuse rather than anticipated in a design doc (see [Phase 5](#phase-5--security-under-live-fire-q2-2026)).
+The retrieval stack moved in the same phase, from a hand-built hybrid to native hybrid search in Qdrant. That story, and why query caching came later, is in [Memory and Knowledge](03-memory.md#how-the-retrieval-stack-got-here).
 
 This is the central lesson of the project, and I'll state it plainly: **architectural simplicity outperformed architectural sophistication.** The sophisticated design lost to the simple one. I've stopped being surprised by that.
 
@@ -111,85 +110,19 @@ The single-agent version was the opposite: a mess at first, steadied only by man
 
 So this is a genuine design choice, not a verdict. Multi-node architectures are easier to keep from breaking, precisely because they segregate focus — for many problems that governance is worth the extra machinery and the seam risk. For *this* problem, a conversation where one mind needs the whole picture to answer well, the single-LLM approach simply outshone it, once the prompt work was there to hold it steady. In graph terms it collapsed to the two-node loop documented throughout this case study — an agent node and a tool node joined by a conditional router, looping until done — with synthesis folded into the same call that decides the tool calls. Same outcome, half the LLM calls per turn. The three-agent-to-one-agent collapse in Phase 1 → 2 was the visible version of this lesson; this was the quieter second version, one level down, inside the single agent itself — and the more transferable of the two.
 
+### One agent or several
+
+The field split in public in June 2025. Cognition's [*Don't Build Multi-Agents*](https://cognition.ai/blog/dont-build-multi-agents) argued for one thread of context, because actions carry implicit decisions and parallel agents make conflicting ones. Anthropic's [multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system) reported a lead agent with parallel subagents beating a single agent by 90.2% on its internal research evaluation, at around fifteen times the tokens of a chat, and named the poor fit: domains where every agent needs the same context, or where agents depend on each other heavily. In April 2026 Cognition's [follow-up](https://cognition.com/blog/multi-agents-working) narrowed its own position: several agents can contribute intelligence while writes stay single-threaded.
+
+This case study ran the experiment twice, as above, and its failure is the one Cognition describes, in the kind of domain Anthropic names as a poor fit. The multi-node version's answer model worked from a relayed picture and wrote answers subtly off. A customer conversation, on one account, with writes that move money, is the shared-context, write-heavy task that both posts place with a single agent.
+
 ---
 
 ## Phase 3 — Identity, Memory, Hardening (Nov–Dec 2025)
 
 Two channels, one human being — and, once web login existed, a browser session too. The agent had to know they were all the same person.
 
-**Cross-platform identity resolution.** A unified identity layer links platform accounts to a single internal user identity, so context, history, and authentication state follow the person rather than the channel. Log in on Telegram, continue on WhatsApp.
-
-The hard part isn't the happy path — it's that the same human arrives first as an anonymous guest, on two platforms, sometimes from several devices, and the moment they log in, all of it has to collapse onto one account without ever creating a duplicate or losing history. Resolution happens by three keys tried in order — backend account ID, then email hash, then phone hash — and lands in one of three cases:
-
-```mermaid
-flowchart TD
-    L["Authenticated login"] --> Q{"Who already owns<br/>this backend ID?<br/>match by ID, email hash, phone hash"}
-    Q -- "this same identity" --> A["Case A · update stored contact details"]
-    Q -- "a different, older account" --> B["Case B · merge this guest into the older one<br/>rehome channels, history, intents, trial locks<br/>under a distributed lock"]
-    Q -- "nobody yet" --> C["Case C · claim the backend ID<br/>onto this identity"]
-```
-
-The merge case is the one that earns its complexity. When a guest identity turns out to be someone who already has an account, everything owned by the throwaway — contact channels, conversation history, pending intents, trial locks — is rehomed onto the older account under a per-pair lock, and the guest is retired. **Identity creation is itself lock-guarded**, with a deliberate backstop: if two concurrent first-contact webhooks race past the lock, the database's own uniqueness constraint catches it, and the loser reads back the winner's row rather than surfacing an error. The lock is the fast path; the constraint is the thing that's actually load-bearing. A cache keyed on the hashed identifier — never the raw phone or email — front-runs the lookup, and every cache hit is re-checked against the database before it's trusted, so a stale entry that outlived a cleanup can't resurrect a deleted account. Because identity is modelled as one internal user with many contact channels rather than one-account-per-platform, the same design absorbs new channels almost for free: the web login relay, and any future surface, attach as just another channel on the same user, carrying the same history and entitlements.
-
-**Intent preservation — "phantom login."** My favourite piece of the system, because it's invisible when it works. The naive flow: user asks for their balance → agent requires login → user authenticates → agent says *"You're logged in! What would you like to do?"* That's a UX failure wearing politeness as a disguise.
-
-Instead: the original request is queued as a pending intent, the authentication state change is detected on the next turn, and the queued request executes automatically. The user asks once and gets an answer.
-
-Making that clean required the tool executor to be authentication-aware — detect login calls within a batch, execute them first, refresh session state, inject fresh credentials into the remaining calls, complete the whole set in the same turn.
-
-The friction-free side of this landed with real users in a way the engineering rarely does. In an early design the login was fully passwordless — an OTP dropped straight into the chat and let you in — and the CEO once relayed a customer who had phoned in specifically to say thank you, not for anything clever underneath, but simply because she hadn't had to remember another password. It's a useful reminder that the most advanced-feeling thing to an end user is often the absence of friction, not the presence of sophistication. The irony worth owning: the flow the platform actually settled on is *less* frictionless than that — the current relay sends the user to a web form to enter email and password, which then triggers an email OTP they paste back into the chat. It's more steps than the version that earned the thank-you call, a reminder that security, backend constraints and product direction don't always pull the same way as pure UX, and that the elegant early version isn't always the one that ships.
-
-**Session expiry mid-conversation runs the same machinery in reverse, as a three-tier ladder.** First, try to renew silently: where the session carries a refresh token, spend it *before* tearing anything down, rewrite the failed tool result into "the token was renewed, just call it again", and the user never learns anything happened. Failing that — and this is the common case, since in the later design the backend issued a long-lived 90-day access token and its refresh-token behaviour was inconsistent (removed at one point, reintroduced before I left) — fall back to a mechanism I added that *auto-initiates* the login flow whenever the user's identifying details are already on file, so re-authentication starts itself rather than waiting to be asked. Whichever tier fires, the session is invalidated cleanly — including the session-check debounce cache, so nothing later in the same turn reads stale auth state — before the re-authentication message is composed.
-
-One adjacent pain point was worth solving with plain scripting rather than architecture. During development I sometimes had to drop and rebuild a database, which would have forced every existing user to log in again — a real irritation for the CEO, who was often the one testing, and for the handful of other users on it. So I wrote small scripts that captured and restored user credentials across a rebuild, so returning users stayed logged in. It mattered more than it sounds: there was a genuine rough patch after the live attacks and the F6S recognition, when a reworked authentication flow stayed broken for about three months and took much of the steam and outside interest out of the project even as it kept being developed and improved.
-
-The lesson I'd draw from that stretch is about momentum, not auth. When a product earns a wave of interest, capitalise on it and stay agile — don't let a large speculative rework stall the very momentum you just won. Changes, tests, feedback, and design choices should be grounded in practicalities and agreed by everyone involved before the platform is rebuilt around them; the strongest solution is usually the elegant one that a few minor adaptations of the existing design can deliver, not the total rework that has to justify itself from scratch. You want the product to take off, not crash and burn while a redesign proves a point.
-
-The ordering in the ladder's last step is the subtle part, and I got it wrong first time. **Open the new login relay *before* generating the user-facing message**, not after. Otherwise the agent says *"I'll send you a login link"* and then has to produce one that doesn't exist yet. Resolve the fact, then let the model describe it — never the reverse.
-
-The inverse principle mattered just as much: the agent is *led by* the API response, so it should be handed as much of that response as possible — especially on errors. A tool that fails with a specific message about a wrong parameter or a bad type lets the model self-correct on the next turn; an error that surfaces enough detail lets it choose a different UX path, recover, or adapt the journey rather than dead-end. I made a point of giving the LLM maximum information exactly where most systems hide it — in failures and raw responses — because that is what makes the model nuanced instead of brittle, and the answers personalised instead of canned. Put plainly: the API messages and responses returned to the agent have to be informative *for the agent*, and getting that right is a real game-changer for the UX and the overall experience.
-
-**For context, an earlier design.** Authentication was rebuilt three times across the engagement — credentials-in-chat, then OTP-in-chat, then the browser-based relay — and each redesign meant rebuilding the agent-side integration from scratch, often adapting to a backend-side change discovered by hitting it in production rather than by advance notice. That churn is itself the argument for the defensive posture the rest of this case study takes: version the observed contract, verify against the wire, and keep the agent's own layer resilient to an upstream that moves. Before the relay, which reached my test log in late July 2026, the agent asked for email, phone, and (briefly) a password directly in the chat thread — functional, and exactly the trust problem described above. Shown here with a fabricated test identity, end to end through to a real LPA activation code, purely to illustrate what the current relay replaced:
-
-<p align="center">
-  <img src="images/outdated_password_login_flow_automatic_trial_provisioned_ss.jpeg" alt="An earlier, superseded auth design asking for email, phone, and password directly in chat, using a fabricated test identity, through to a real free-trial LPA activation code, boxed" width="420"/>
-  <br/>
-  <em>Superseded design, kept for contrast — not the current flow. Test identity throughout; its email, password, login code and activation code are boxed.</em>
-</p>
-
-<p align="center">
-  <img src="images/voice_login_ss.jpeg" alt="The same earlier auth design over voice — email and phone typed (boxed), the code confirmed by voice note, the account balance read back in a spoken reply" width="420"/>
-  <br/>
-  <em>18 July 2026, 20:26–20:32 (#4646–4654). Same superseded design, over voice; email and phone boxed, and the voice note that speaks the code is not published. The credentials-in-chat step is exactly what the relay above exists to remove.</em>
-</p>
-
-Throughout, the original failed request stays queued as a pending intent, so whichever rung of the ladder the user comes back on, their request executes automatically.
-
-<p align="center">
-  <img src="images/latest_login_flow_ss_2.jpeg" alt="WhatsApp screenshot showing an expired login link automatically replaced with a fresh one on the real esimtime.com domain, followed by a successful login" width="320"/>
-  <br/>
-  <em>The production number, 30 August 2026, 20:47–20:49 (WhatsApp lines 1757–1771). The relay in practice — an expired link is handled by issuing a fresh one, not by leaving the user stuck. Link token and code boxed. The $33.72 is the balance the development bot reported after its 2 August purchase, <a href="#from-the-test-log-the-money-and-the-words">below</a>.</em>
-</p>
-
-**Interrupted messages have to survive, with their modality intact.** When a user is stopped mid-request — by a human-verification challenge, a contact-share prompt, an expired session — whatever they were trying to say is held and replayed afterwards. Two details took production to get right:
-
-*Hold the message, not its text.* A voice note interrupted by a gate is stored as a voice reference and replayed as one. Flattening it to a transcript would silently downgrade the modality of everything a gate interrupts, and the user experiences that as the assistant ignoring the fact they spoke.
-
-*And a re-authentication notice must fire once per window, not once per message.* The outcome of "can this user be re-linked?" is cached for several minutes so repeated messages don't mint fresh login links. But that cache means the *dispatch* path stays hot too — so without a separate once-per-window guard, every subsequent message gets consumed by the same re-auth reply. The user types, gets "please log in", types again, gets it again, and never reaches the agent. Removing that guard looks safe, because the cached operation is cheap; it produces an unbreakable loop. Caching a *decision* and gating an *action* on it are two different problems.
-
-**Live state supremacy.** A rule I'd now consider non-negotiable in any agent touching real accounts: *authentication status and account state are read fresh at execution time, never inferred from conversation history.* Live tool output is ground truth; history is reference only. Inferring current state from earlier turns is a reliable generator of confidently wrong answers.
-
-**Zero-hallucination tool execution, in three enforcement tiers.** *In code:* a whitelist and structural check reject calls to tools that don't exist, or calls missing a name, ID or arguments, *before* anything reaches the executor — each one logged as a hallucination metric and returned to the model as an error. *In each tool's Pydantic schema:* argument types and formats. *As hard rules in the system prompt:* per-turn call ceilings (knowledge-base lookups ×3, country and region product lookups ×3 combined, post-payment inventory polling ×2), duplicate-call avoidance, and a two-strike stop after two failed attempts. Measured tool accuracy across the integration suite: **>99%**.
-
-**Session lifetime — a two-clock model.** Sessions run on a 90-day rolling inactivity window, but the expiry ceiling is recomputed on every message as the *earlier* of the new inactivity horizon and the upstream access token's own expiry claim. A frequent user stays authenticated indefinitely; a session can never outlive a revoked token. Whichever clock runs out first wins. A genuinely expired token soft-invalidates and triggers background re-authentication rather than surfacing an error, and a short in-process debounce cache prevents redundant session lookups during multi-tool turns — particularly during priority-authentication turns where a login and its dependent tools all execute together.
-
-**Reliability.** Circuit breakers on every external dependency — three consecutive failures open the circuit, recovery timeouts differ by dependency criticality (15 seconds for the cache, 30 for retrieval), and a single success in half-open state closes it again. Background health checks run continuously. A shared retry decorator wraps all outbound third-party calls with exponential backoff and jitter, deliberately SDK-agnostic: it matches on error *shape* (rate-limit, quota, timeout, 5xx) rather than library-specific exception types, so one policy covers the LLM SDK, the HTTP client, and both messaging platforms uniformly.
-
-**The agent catches its own worst outputs, not just its dependencies' failures.** Two self-correction paths run on the LLM's own response, before anything reaches the user. If the model answers in plain text instead of calling the mandatory output-wrapper tool, the next turn detects it and injects a correction instructing it to restate the answer properly — the model gets one more attempt rather than the malformed reply ever going out. An empty response with no content and no tool calls gets the identical treatment: a correction prompting it to answer using information it already has, rather than the turn silently failing. And error handling is explicitly three-tier rather than one catch-all: a recursion-limit hit returns a graceful clarification rather than a stack trace; a model timeout returns a plain "that's taking too long, try again"; anything else attempts to salvage whatever partial reply had already been generated before the crash, appending a note that the response was interrupted, rather than returning nothing at all. Three different failure shapes, three different honest messages — not one generic "something went wrong."
-
-**Token values never reach a log line, even truncated.** Any argument key containing the word "token" is logged only as a character count. Not the first few characters, not a hash — a count. The debugging value of a redacted-but-present token is close to zero anyway, and a count is enough to confirm one was present without ever putting the value itself somewhere a log-aggregation tool, a support screenshot, or a careless grep could surface it.
-
-**Multi-worker coordination.** Redis distributed locking for operations that must happen exactly once across workers: webhook registration, scheduled tasks, leader-elected singletons.
+How identity, login and sessions were built, and what broke on the way, is in [Identity, Login and Sessions](04-identity.md). The same phase hardened the agent itself: the rules that keep it honest are in [The Agent](02-agent.md#the-rules-that-keep-it-honest), and the reliability and coordination work is in [Running It](08-operations.md#reliability-and-coordination).
 
 ---
 
@@ -197,174 +130,7 @@ Throughout, the original failed request stays queued as a pending intent, so whi
 
 The phase where the agent stopped being support tooling and became a commerce platform.
 
-**In-chat purchase.** Complete checkout inside the conversation: plan selection, coupon discovery and validation, card payment or wallet balance, provisioning, activation code delivery. The user never leaves the thread.
-
-The purchase path is deliberately proactive rather than transactional. On detecting purchase intent the agent checks existing eSIMs for the destination, checks whether wallet balance covers the cost, and pulls available coupons sorted by value — all before presenting anything. Then it presents a mandatory **Checkout Summary** — plan, best applicable discount, an explicit prompt for any custom promo code, new-eSIM-versus-existing choice, setup preferences — and waits. No purchase executes without that confirmation gate.
-
-Card payments return a checkout URL through a dedicated structured field rather than embedded in message text — session-ID underscores corrupt markdown links on WhatsApp, a small detail that cost real transactions before it was found. Balance payments settle instantly and surface the activation code in the same turn, or explain the brief provisioning wait honestly rather than fabricating a code.
-
-<p align="center">
-  <img src="images/purchase_flow_ss_1.jpeg" alt="A Telegram testing exchange where the agent defaults to card payment without first checking wallet balance and coupons, and returns to the designed consultant behaviour once challenged" width="420"/>
-  <br/>
-  <em>Caught mid-conversation defaulting to the wrong path — card before balance, asking for coupon codes instead of finding them — and back on the designed behaviour only once challenged. A prompt-level regression of exactly the kind the journey suites exist to catch. Left in because it's honest, not because it's flattering.</em>
-</p>
-
-<p align="center">
-  <img src="images/purchase_test_ss1.jpeg" alt="A live Stripe checkout session alongside a test probing a split payment across wallet balance and card in the same purchase" width="480"/>
-  <br/>
-  <em>17 July 2026, 15:30–15:35 (#4574–4581 in the test log): two balance purchases that the ledger confirms ($13.48 before, $10.22 after), then a request to split a third. The agent declines, correctly — a split spends the balance first and charges the card only for the shortfall. What happened when there was a shortfall is twenty minutes further down the same log, <a href="#from-the-test-log-the-money-and-the-words">below</a>.</em>
-</p>
-
-**The hardest problem: proactive delivery.**
-
-Agents are reactive by construction. They speak when spoken to. But the highest-value moment in this product is immediately *after* payment — the user has paid, is waiting, and needs their activation code. An agent that cannot initiate contact fails precisely where it matters most.
-
-The solution: **two Redis Streams consumer groups**, one for inbound user messages and one for backend-initiated events, sharing a common worker base. Inbound traffic is fanned out across workers so a burst on one platform can't starve the other; outbound events resolve the right delivery channel per user and dispatch through the same agent pipeline.
-
-The shared worker layer provides:
-
-- **Exactly-once processing** via a Redis idempotency key running a processing → completed state machine with a five-minute claim TTL
-- **Crash recovery** — messages left pending by a dead worker are automatically re-claimed after a stale-idle threshold, so in-flight work survives a restart
-- **Bounded retries with a circuit breaker** that backs off on upstream rate-limit and timeout errors rather than hammering a struggling dependency
-- **Dead-lettering** to a separate stream with 14-day retention after retries are exhausted — failures preserved for inspection, never silently dropped
-- **Pending store** — an event fired for a user who has never opened a conversation is held with a TTL and delivered the moment they first make contact
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant BE as Backend or Stripe
-    participant WH as Agent webhook
-    participant RS as Redis Stream
-    participant W as Notification worker
-    participant AG as Agent
-    participant U as User channel
-
-    BE->>WH: Event with idempotency key
-    WH-->>BE: 202 Accepted
-    WH->>RS: XADD
-    RS->>W: Consumer group delivers to exactly one worker
-    W->>W: SET NX claim · duplicate? acknowledge and skip
-    W->>W: Resolve user by ID, email hash or phone hash
-    W->>W: Ban check · dedupe by platform and chat ID
-    alt User has a channel
-        W->>AG: Framed event, full context
-        AG->>U: Reply in the agent's own voice
-    else No conversation yet
-        W->>W: Hold in pending store, one-hour TTL
-    end
-    W->>RS: XACK
-    Note over W,RS: Crashed worker's messages reclaimed after the stale-idle threshold. Exhausted retries go to the dead-letter stream
-```
-
-**Deduplication runs in three independent layers**, because each catches a duplicate the others can't. The backend's idempotency key catches a retried payment webhook, and a short claim on each stream message stops a redelivered one from running twice. The consumer group guarantees one message ID reaches exactly one of the four competing workers. And a final dedupe on platform-plus-chat-ID catches the case where one person maps to several contact channels that converge on the same thread — without it, they get the same payment confirmation twice. The claim key's five-minute TTL is deliberate: a worker that dies mid-flight releases its claim instead of locking the message away forever.
-
-**Malformed payloads degrade, unknown ones vanish — and only one of those is acceptable.** Event templates render through a mapping that substitutes a visible `[field: not provided]` placeholder for any missing field instead of raising, so a half-populated backend payload produces a message the agent can reason about rather than a crashed delivery. An event type with *no* framer is the sharp edge: the webhook still returns 202, the stream still acknowledges, and the user receives nothing. That warning was deliberately raised from debug level, because it is the only signal that a backend release added an event the agent doesn't understand yet. Framer and event type have to ship in the same change.
-
-Three notification behaviours took real production learning:
-
-**OTP burst suppression.** A short per-user lock collapses duplicate sends into one. Without it, a user tapping twice gets two codes and the second invalidates the first — a self-inflicted support ticket.
-
-**Ban check before delivery.** The abuse gate is consulted before any outbound notification, so blacklisted users are silently dropped rather than actively messaged by a system that has already decided to block them.
-
-**One event type deliberately skips the queue entirely.** A suspension or unsuspension event updates the user's status directly in the shared cache and returns, without ever touching the stream. The reason is timing: the messaging layer's own suspension check has to see the new status on the *very next* inbound message, and routing that through the same asynchronous pipeline as every other notification — enqueue, wait for a worker, dispatch — would leave a window where a message from a just-suspended user could still slip through. Not every event belongs on the general-purpose path just because the general-purpose path exists.
-
-**The pending store's dequeue is atomic, not just present.** When a held notification is finally delivered, the queued entry is deleted from the cache *before* delivery is attempted, not after. Two workers can race to the same pending entry during a retry sweep; the one that loses the delete finds nothing there and simply skips it, rather than both firing the same notification. A one-hour TTL, swept every 45 seconds, bounds how long an event will wait for a channel to appear at all — long enough to cover the ordinary gap between a payment webhook and a user's first message, short enough that a notification doesn't surface confusingly stale days later for someone who never comes back promptly. The right length here is a genuine judgment call, not something derived from first principles, and it's revisited as real usage informs it rather than fixed once and forgotten.
-
-**Closed session windows.** Both messaging platforms close the free-form messaging window after a period of user inactivity. Once closed, a normal agent message simply will not deliver. The system detects this and falls back to an approved template on WhatsApp or a plain-text bypass on Telegram — because only those can re-open a closed session. Invisible when it works, catastrophic when missed: the payment confirmation for a user who paid and walked away would silently never arrive.
-
-**And the template path has two branches that deliberately send nothing.** This was counterintuitive to build and I think it's the right call:
-
-- A verification-complete notification for a user who *isn't* eligible for the welcome offer is **skipped entirely**, because the only approved template for that event carries the offer's call-to-action and there is no plain variant. The agent greets them normally instead. Sending it anyway would have promised something the user couldn't claim — a support ticket manufactured by the notification system.
-- An OTP-carrying event that arrives **without an OTP in the payload is dropped and logged as an error**, rather than sent. The template would otherwise render literally as *"None is your verification code"*.
-
-Templates are a scarce, fragile resource: each is pre-approved, re-approval issues a new identifier, and category rules constrain what they may contain and where they may be delivered. A template burned on an undeliverable or visibly broken message isn't retryable. Dropping a message is bad; sending a customer a broken one mid-signup is worse — and "do nothing, loudly, in the logs" is a legitimate third option that's easy to forget exists.
-
-Each event type has a dedicated framer, so the agent delivers news in its own voice with full context — payment confirmation with activation code and install walkthrough, low-data alerts with top-up options, expiry warnings with renewal plans, payment failures with retry or balance fallback.
-
-Webhook ingest, measured under load on the bench: **100% delivery, median 5ms, p95 9ms, p99 14ms** across 20 concurrent users.
-
-**Free trial provisioning** with anti-abuse controls and asynchronous activation shipped on the same infrastructure.
-
-**A related gift-eligibility rule is worth its own mention, because the bug it prevents is invisible in code review.** A newly-verified account can be offered a complimentary trial — but arriving via the offer's own call-to-action button is not proof of actually qualifying. Eligibility is computed once, at the source, by checking whether the account has already claimed a free plan, and that computed flag is what the agent is instructed to act on, checked again *after* login rather than trusted from the button press. An earlier revision skipped that re-check and, under the right sequence, offered the new-user gift to an account that already held nine existing eSIMs. Nothing about that is visible reading the code; it only ever shows up as a customer getting an offer that makes no sense for their account. It's now asserted directly in the regression suite, specifically because a plausible-looking review pass would not have caught it.
-
-<p align="center">
-  <img src="images/free_trial_offer_gated_ss.png" alt="The agent declining a second free-trial request from an account that already claimed one, and offering to show the existing trial instead" width="480"/>
-  <br/>
-  <em>19 April 2026, on the test account created above. The anti-abuse gate on the free trial, working as designed: one per account, enforced, not just documented. The login prompt in the reply is from the earlier, credentials-in-chat design that the login relay later replaced.</em>
-</p>
-
-The uncomfortable truth from this phase: the genuinely hard part of "AI commerce" was almost entirely distributed systems work. The model was the easy component. Delivery guarantees, idempotency, and failure semantics were where the difficulty lived.
-
-### From the test log: the money and the words
-
-Two exchanges from my Telegram testing, a week apart, show the two ways an in-chat payment goes wrong, and which layer each one lives in.
-
-**17 July: the split that half-ran.** Twenty minutes after the screenshot above, a $52.00 plan against a $10.22 balance, so a real split:
-
-<p align="center">
-  <img src="test-log/split_payment_chat.png" alt="Telegram, 17 July 2026: the agent reports that $10.22 was deducted from the balance while the card leg of a split payment failed, then that the balance is $0.00 with $52.00 still due, then that the split cannot be processed; I reply that I fixed the backend" width="420"/>
-  <br/>
-  <em>17 July 2026, 15:55–16:24 (#4588–4593), in the Telegram app. eSIM identifiers boxed.</em>
-</p>
-
-<details>
-<summary>Transcript</summary>
-
-> **#4587 Agent** · 15:55 — … With split payment, $10.22 will be deducted from your balance, and the remaining $41.78 will be charged to your card. …
->
-> **#4590 Agent** · 15:56 — … While your balance of $10.22 was deducted, the remaining $41.78 could not be charged to your card at this moment. 💳 …
->
-> **#4591 Agent** · 16:00 — … Your previous balance of $10.22 has been used, and your current balance is now $0.00. The remaining $52.00 still needs to be paid. …
-
-</details>
-
-The wallet leg committed, the card leg failed, and nothing rolled back: $10.22 had left the wallet without paying for anything. That is the classic partial failure of a multi-leg payment, and the fix has a standard shape: **reserve, then capture every leg or release every leg** — a saga with a compensating step. My fix went in at 16:24 (#4593), and from the outside the log shows that shape afterwards: the wallet share, $35.22 by then and applied at 17:36 to a card checkout for a Europe plan (#4597), is held while the checkout is open (balance $0.00 at #4599, 17:40) and is back by 00:10 the next morning ($35.22 at #4635), with the checkout unpaid.
-
-**24 July: two confirmations, one debit.** The same plan as the 17 July purchases, on my second test account, against its $1.95 balance:
-
-<p align="center">
-  <img src="test-log/phantom_purchase_chat.png" alt="Telegram, 24 July 2026: two 'Funds locked in' confirmations for the same $1.63 plan from a $1.95 balance, my question how, the agent's 24-second voice reply, and a card checkout for the plan" width="420"/>
-  <br/>
-  <em>24 July 2026, 00:44–00:49 (#4801–4812), in the Telegram app. The eSIM identifier is boxed.</em>
-</p>
-
-<details>
-<summary>Transcript</summary>
-
-> **#4804 Me** · 00:44 — lets buy this, use balance.
->
-> **#4805 Agent** · 00:45 — Funds locked in 🔒<br/>Your Türkiye 1GB - 1 Day plan has been successfully added to your existing eSIM using your account balance. You're all set and ready to go! ✈️🇹🇷
->
-> **#4806 Me** · 00:45 — awesome, now let me buy the same plan using balance.
->
-> **#4807 Agent** · 00:45 — Funds locked in 🔒<br/>Your second Türkiye 1GB - 1 Day plan has been successfully added to your existing eSIM using your remaining balance. You're all set! ✈️🇹🇷
-
-</details>
-
-Two $1.63 plans don't fit in $1.95. I asked how, and asked for the answer in voice:
-
-https://github.com/user-attachments/assets/8c395637-858e-4850-a942-791f55397244
-
-<p align="center"><em>The agent's 24-second reply, unedited: "You only had enough in your balance for one plan, not two." Original: <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/audio/tg-4810.ogg">tg-4810.ogg</a>. Sound on: the player starts muted.</em></p>
-
-Its next offer settles the question from the ledger side:
-
-> **#4814 Agent** · 00:49 — Split payment locked in 🪙💳<br/>We're applying your $0.32 wallet balance, and the remaining $1.31 will be covered by card to top up your existing Türkiye eSIM `[eSIM id removed]` with the Türkiye 1GB - 1 Day plan.
-
-$0.32 is $1.95 − $1.63: one debit. A week earlier the same request produced two confirmations and two debits ($13.48 → $10.22); this time it produced two confirmations and one. The ledger held, because the wallet is debited in code, not by the model. The words were wrong, and the agent's own explanation in the voice note is that the second request "triggered the exact same order". The second confirmation was the model asserting what its context didn't support: the fabrication failure taken apart in [03](03-models.md#temperature-attention-and-the-wrong-product-id), and [live state supremacy](#phase-3--identity-memory-hardening-novdec-2025) failing on a different path.
-
-It was not the first time, and the fixes in 03 came in layers. Temperature came down first, for the fabrication. Then came a per-user cache of exactly what each user had just been shown, which the purchase tool checks before it will execute, and the promotional plan's identifier moved out of the prompt and into the tool, so the model has no salient wrong answer to reach for. Nine days later, the same plan from the balance:
-
-<p align="center">
-  <img src="test-log/purchase_confirmed_chat.png" alt="Telegram, 2 August 2026: plan options by voice and text, then 'Plan Purchased Successfully' for the $1.63 Türkiye plan with 'Your new account balance is $33.72'" width="340"/>
-  <img src="test-log/balance_chat.png" alt="Telegram, 3 August 2026: asked for the balance, the agent replies 'Your current wallet balance is $33.72', followed by a run of voice notes" width="340"/>
-  <br/>
-  <em>Left: 2 August 2026, 21:05–21:07 (#5013–5019); the eSIM identifier is boxed. Right: a fresh balance query five hours later, 3 August, 02:06–02:11 (#5031–5040).</em>
-</p>
-
-One confirmation, one debit ($35.35 → $33.72), and the confirmation states the new balance. The ledger agrees five hours later, and four weeks after that the production number reports [the same $33.72 on WhatsApp](images/latest_login_flow_ss_2.jpeg). **A transactional confirmation is a fact, not a sentence: it carries the tool's own numbers, and the ledger has to agree with it.**
-
-The test log adds one correction to the uncomfortable truth above: the model was the easy component to build, not to trust.
+In-chat purchase, the proactive notification pipeline, the platform rules that shaped delivery, and the test-log record of what in-chat payment got wrong and what it got right are in [Commerce and Messaging](05-commerce.md). The uncomfortable truth of this phase was that the hard part of AI commerce was distributed-systems work, not the model.
 
 ---
 
@@ -397,11 +163,11 @@ flowchart LR
 
 Validated adversarially: **19,164 malicious payloads absorbed at 319 RPS** while legitimate traffic held **100% success** (bench, pre-multimodal).
 
-The infrastructure itself was reshaped by that experience. The first deployment was built for scalability in the abstract; what it actually met on going public was a security onslaught. The redesign that followed optimised hard for performance under that reality — moving to a stream-based message-processing model guarded by semaphores (the same shape as the [notification system](#phase-4--commerce--proactive-engagement-q1-2026)), and pulling essentially every operational value out into environment configuration so limits, workers and model choices could be retuned without a code change.
+The infrastructure itself was reshaped by that experience. The first deployment was built for scalability in the abstract; what it actually met on going public was a security onslaught. The redesign that followed optimised hard for performance under that reality — moving to a stream-based message-processing model guarded by semaphores (the same shape as the [notification system](05-commerce.md#proactive-delivery)), and pulling essentially every operational value out into environment configuration so limits, workers and model choices could be retuned without a code change.
 
-The net effect was a system that got *stronger* under attack rather than merely surviving it — each wave of abuse became the specification for the next layer of defence. The company's founder made the same point publicly and more memorably than I would, on the F6S announcement: that the constant probing amounted to a free, continuous penetration test, and that their malice was what let the platform harden. I'd only add the honest footnote that antifragile isn't free — see the rough three-month stretch described in [Phase 3](#phase-3--identity-memory-hardening-novdec-2025), where a reworked auth flow stayed broken and drained real momentum. The system came out tougher; it wasn't painless.
+The net effect was a system that got *stronger* under attack rather than merely surviving it — each wave of abuse became the specification for the next layer of defence. The company's founder made the same point publicly and more memorably than I would, [on the F6S announcement](../README.md#recognition): that the constant probing amounted to a free, continuous penetration test, and that their malice was what let the platform harden. I'd only add the honest footnote that antifragile isn't free — see the rough three-month stretch described in [Identity, Login and Sessions](04-identity.md#when-a-session-expires), where a reworked auth flow stayed broken and drained real momentum. The system came out tougher; it wasn't painless.
 
-**Every mechanism, every threshold, and the reasoning behind each is in [Security Architecture — A Deep Dive](09-security-architecture.md).**
+**Every mechanism, every threshold, and the reasoning behind each is in [Security Architecture — A Deep Dive](07-security.md).**
 
 ---
 
@@ -409,50 +175,7 @@ The net effect was a system that got *stronger* under attack rather than merely 
 
 You cannot operate what you cannot see.
 
-Observability was designed in from the start rather than retrofitted: **every agent response carries a confidence score and an internal reasoning string** (never user-visible) through a mandatory structured output wrapper, and LangSmith tracing was wired up from day one — so every LLM call, tool invocation, and decision path is replayable.
-
-That matters more than conventional logging for agent systems. When a conversation goes wrong, the question is rarely "did the code throw" — it's *"why did the agent choose that."* Decision replay makes that answerable rather than speculative. The same stack also serves product analytics and business metrics.
-
-The full stack: **Prometheus** for metrics across application, containers, and host; **Grafana** for operational, business, and administrative dashboards; **Loki + Promtail** for centralised log aggregation; **LangSmith** for LLM tracing and token accounting; structured JSON logging with rotation throughout.
-
-**Health checks that catch silent death, not just crashes.** The health endpoint reports per-dependency status — database, checkpointer, vector store, session cache, and both stream workers — and the workers are the interesting case. A stream worker's failure mode isn't a crash: the process stays alive, the container reports healthy, HTTP keeps answering, and notifications simply stop being delivered. Nothing else in the stack would notice, possibly for hours.
-
-So each worker stamps a heartbeat every loop tick, and a running worker that hasn't ticked within a threshold is reported as **deadlocked** and fails overall health. A *stopped* worker deliberately doesn't, because that's the expected state during graceful shutdown and a container on its way down shouldn't flap the endpoint.
-
-The related distinction I'd keep: `503` and `500` mean different things here. 503 is *"I looked and something is wrong"* — with the failing dependency named in the body. 500 is *"I could not look"*. Collapsing those two into one status is a small thing that costs real time during an incident.
-
-Plus purpose-built retrieval telemetry: every retrieval or rerank stage returning nothing increments a zero-hit counter and fires a non-blocking background write of the offending query (truncated, PII-scrubbed) to a dedicated table. Knowledge gaps surface as data rather than as user complaints — and the write is deliberately off the critical path, so a slow database can never add latency to a chat response that already came up empty.
-
-### The dashboards were lying, and I only found out by asking them
-
-The operator dashboard reads top-down for a non-technical audience — service health, then capacity, customers, abuse, assistant quality, knowledge gaps, channel mix, revenue funnel, infrastructure, the monitoring stack's own health, and live logs. Around 120 panels. It looked excellent.
-
-Then I wrote a script that executed **every panel's real query** through the visualisation layer's own query API — exactly the path the browser takes — rather than parsing the dashboard definition.
-
-**48 of 61 query targets returned nothing.**
-
-Not broken-looking. Not erroring. Rendering a clean, confident empty chart, which is visually indistinguishable from *"this metric is zero right now"*. A dashboard that parses is not a dashboard that works, and reviewing the JSON only ever proves the former.
-
-Two tools now exist so it can't recur, and they're meant to be run as a pair:
-
-- **A traffic simulator** that drives realistic load through the *live* pipeline — genuine platform webhooks at the running app, so guards, coalescing, stream workers, the agent, its tools, retrieval and both speech models all execute exactly as they do for a real user, and every metric lands in the time-series database the ordinary way. Nothing downstream is faked; outbound replies are captured by the same API stub the end-to-end driver uses.
-- **A panel verifier** that then runs every query and reports what came back empty — deliberately separating *legitimately* empty (a counter with open-ended labels genuinely has no series until the first real event, and several of those being empty is good news) from *genuinely misconfigured*. Without that split the report is a wall of warnings nobody reads.
-
-Run the simulator, then the verifier. Anything still empty is unwired, not idle.
-
-**And one small trick that removed a whole category of false alarm.** A labelled counter doesn't exist in the metrics store until it's first incremented — so a panel asking about, say, refused video uploads renders "No data" until someone actually sends a video. That is visually identical to a panel whose query is wrong. On a fresh deploy, half the dashboard looks broken and isn't.
-
-The fix is to **touch every label combination at startup**, creating each series at zero without recording an event. Idle panels then read `0`, which is a fact, rather than "No data", which is ambiguous between *nothing happened* and *nobody wired this up*. It costs nothing and it's the difference between a dashboard people trust and one they learn to squint at.
-
-The corollary is a rule for adding metrics: a new label value has to be registered in that startup block too, or its panel stays unverifiable until the event happens to occur in production.
-
-Alerting is provisioned as code alongside the dashboards — availability, agent error rate, delivery loss to the dead-letter queue, voice transcription failure, stale analytics, and host and cache memory ceilings. One honest gap remains: routing still uses the default contact point, so the rules evaluate and go red in the UI but nobody is paged yet. It's a small change and it isn't done, which is exactly the kind of thing a limitations section exists to say out loud.
-
-<p align="center">
-  <img src="images/grafana_ss_1.jpeg" alt="The operator dashboard after the fix: an at-a-glance row for conversations, answer success, reply time, sales and trials, then capacity gauges and per-service memory against each limit" width="700"/>
-  <br/>
-  <em>The dashboard after the fix — reading top-down for a non-technical audience, service health first, then every capacity limit. Idle counters read zero rather than "No data", which is the label pre-seeding described above at work.</em>
-</p>
+Observability was designed in from the start: a confidence score and a reasoning string on every response, tracing of every model call and tool call, metrics, logs and dashboards, and a check that the dashboards themselves tell the truth. The full account is in [Running It](08-operations.md#observability).
 
 ---
 
@@ -460,68 +183,9 @@ Alerting is provisioned as code alongside the dashboards — availability, agent
 
 The most recent work: native voice and image, **entirely self-hosted — no per-minute speech billing, no third-party voice APIs.**
 
-This sits alongside a handful of pieces in this project I'd call genuinely novel — not because the components are exotic, but because the *combination* wasn't a thing anyone had a reference implementation for when I built it: a full voice-and-image concierge that also transacts, running on CPU inside conversational latency, for about $17 a month plus a few cents per conversation. Like the [notification system](#phase-4--commerce--proactive-engagement-q1-2026) and the [identity manager](#phase-3--identity-memory-hardening-novdec-2025), the multimodal layer is a simple, cheap, elegant solution to a problem usually answered with expensive infrastructure — each one arrived at the same way: my own insight, a lot of reading, and iteration against a real latency and cost budget rather than a whiteboard. I'm documenting it in some depth precisely because the lean-multimodal path is under-travelled and I'd have wanted these notes myself.
+This sits alongside a handful of pieces in this project I'd call genuinely novel — not because the components are exotic, but because the *combination* wasn't a thing anyone had a reference implementation for when I built it: a full voice-and-image concierge that also transacts, running on CPU inside conversational latency, for about $17 a month plus a few cents per conversation. Like the [notification system](05-commerce.md#proactive-delivery) and the [identity manager](04-identity.md#one-person-many-channels), the multimodal layer is a simple, cheap, elegant solution to a problem usually answered with expensive infrastructure — each one arrived at the same way: my own insight, a lot of reading, and iteration against a real latency and cost budget rather than a whiteboard. I'm documenting it in some depth precisely because the lean-multimodal path is under-travelled and I'd have wanted these notes myself.
 
-**Speech-to-text** runs faster-whisper directly on raw audio from both platforms, which deliver ogg/opus natively so nothing needs transcoding inbound. Model size was chosen by measurement rather than default — benchmarked at INT8 on CPU:
-
-| Model | Latency (20.7s clip) | RTF | RSS/worker | Note |
-|---|---|---|---|---|
-| base | 1.85s | 0.09 | 230 MB | weaker non-English accuracy |
-| **small** | **5.56s** | **0.27** | **470 MB** | **chosen — holds 32-language coverage** |
-| large-v3-turbo | — | — | 1,873 MB | infeasible at four workers |
-
-Oversized and overlong clips are rejected before decode rather than after paying for transcription.
-
-**And an unintelligible clip short-circuits before the model runs at all** — no agent turn spent on an empty transcript. The reply comes back **as a voice note, in the detected language**, because answering a spoken message with text reads as *"I didn't hear you"* rather than *"I couldn't make that out"*, which is the wrong signal when the problem is audio quality. It's also counted separately from successful transcriptions, so a regression in the audio pipeline — a broken transcoder, a bad model swap, a platform-side codec change — shows up on a dashboard instead of as users quietly abandoning voice. Silent, noise-only and over-length fixtures exist specifically to exercise that path rather than assume it.
-
-That path misfired before it was right, and the test log has both sides. On 20 July a clear six-second question came back as *"I received your voice note, but I wasn't able to transcribe it"*; by 2 August the same kind of question was answered in voice:
-
-https://github.com/user-attachments/assets/655d366d-702a-4b7e-8dcb-f4cccab28b5c
-
-<p align="center"><em>20 July, then 2 August: all four clips in order, unedited. Originals: <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/audio/tg-4683.ogg">tg-4683.ogg</a>, <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/audio/tg-4684.wav">tg-4684.wav</a>, <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/audio/tg-5012.ogg">tg-5012.ogg</a>, <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/audio/tg-5013.ogg">tg-5013.ogg</a>. The words that end the first reply, which Whisper hears as "Beaking head", are most likely 🗣️ read aloud by its Unicode name, "speaking head" — the emoji bug shown further down. Sound on: the player starts muted.</em></p>
-
-Failure modes deserve the same modality thought as success paths, and they rarely get it. Voice-activity filtering trims dead air; decoding is tuned for latency over polish; a low-confidence language detection triggers a re-decode forcing English rather than trusting a bad guess.
-
-<p align="center">
-  <img src="images/voice_browsing_ss.jpeg" alt="Telegram screenshot of plan browsing by voice note, with the agent answering in voice and switching to text for structured plan pricing" width="320"/>
-  <br/>
-  <em>Browsing by voice — spoken questions, a spoken reply, and structured pricing dropping into text, which is the voice-downgrade rule doing its job. A phone number at the top is boxed.</em>
-</p>
-
-**Text-to-speech** uses Piper with a per-language voice map covering 32 languages, lazy-loaded and LRU-cached per worker, transcoded to OGG/Opus so replies arrive as native voice-note bubbles rather than file attachments. The export dates that change: up to 20 July (#4684) the bot's voice notes are 22 kHz WAV files, and from 23 July (#4707) they are OGG/Opus. Voices are memory-mapped at roughly 0.2 MB RSS each, which is why the cache could be doubled for free. Missing voices degrade through a fallback chain and log a warning instead of failing the reply.
-
-**Image understanding** uses Gemini Flash's native multimodal input — no separate vision pipeline. Bounds on file size and pixel count come from explicit memory math: a naive RGB decode costs roughly three bytes per pixel, so an uncapped decode from a small compressed file can balloon to hundreds of megabytes, multiplied across workers. The cap accepts any real phone photo while bounding the decode, and thumbnails immediately afterward so no visible quality is lost.
-
-**Mode-aware responses.** Transcribed voice is tagged distinctly from typed text before reaching the model, so the system prompt can switch the agent into a spoken register — no markdown, no bullets, no emoji — and route the reply out through synthesis instead of text. The agent can also **return media**: image URLs and documents travel in a dedicated structured field, every one regex-validated as a plain public link before use, so local file paths can never leak into a chat reply. In practice a user can send a screenshot of their settings screen and be walked through it, and the agent can send back a visual guide or document link rather than describing a screen in words.
-
-<p align="center">
-  <img src="test-log/settings_walkthrough_20jul.png" alt="Telegram, 20 July 2026: my About-phone screenshot, answered 'I see you have a POCO X3 NFC' with two ways to check eSIM support; then my Security-status screenshot, answered 'I see you're in the Security status section… you'll need to look in a different place'" width="300"/>
-  <img src="test-log/settings_walkthrough_21-23jul.png" alt="Telegram, 21 and 23 July 2026: my SIM settings screenshot, numbers boxed, read back as two physical SIMs, BSNL Mobile and Jio, with mobile data on; a VPN settings screen recognised as one; and an Advanced-settings screen where the agent explains why IP and DNS show 'Not available'" width="300"/>
-  <br/>
-  <em>The development bot in the Telegram app. Left, 20 July: the About-phone screen, answered at 21:41 on its fourth send, the first three having gone unanswered (#4675–#4679), then the Security-status screen and the redirect (#4681–#4682). Right: 21 July, the SIM settings read back, phone numbers boxed (#4698–#4699); 23 July, a VPN screen and why IP and DNS show "Not available" (#4733–#4738).</em>
-</p>
-
-The test log shows why the no-emoji rule matters. On 26 July the balance came back in voice as *"Your current account balance is $35.22 Sparkles"*, and on 29 July the production number said the same on WhatsApp. "Sparkles" is how the speech engine pronounces ✨: Piper turns text into phonemes with espeak-ng, and espeak-ng speaks a symbol it has no pronunciation for by its name. Running espeak-ng itself on ✨ offline gives exactly that word. It wasn't the first: four minutes earlier, on 25 July, a spoken greeting had ended with 🌍 as *"Globe showing Europe Africa"* (#4864). By 3 August the same answer was clean:
-
-https://github.com/user-attachments/assets/b35e122a-bc56-4eac-8132-d8da71cdfaf4
-
-<p align="center"><em>26 July (Telegram), 29 July (WhatsApp, production), then 3 August (Telegram): the three clips, unedited. Originals: <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/audio/tg-4868.ogg">tg-4868.ogg</a>, <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/audio/wa-1687.opus">wa-1687.opus</a>, <a href="https://cdn.jsdelivr.net/gh/JoshPola96/enterprise-ai-agent-architecture-esim@40124bf1de749be8224c53c3eef61322bdc9fd42/docs/test-log/audio/tg-5028.ogg">tg-5028.ogg</a>. Sound on: the player starts muted.</em></p>
-
-Both models are lazy-loaded once per worker, run on an isolated thread pool with a concurrency semaphore so a burst of voice messages can't starve text requests, and are baked into the image at build time rather than pulled at runtime — for reasons [the memory-ceiling section](02-platform.md#operating-under-a-memory-ceiling) explains at some cost.
-
-**Status:** deployed to production. The first release ran voice round-trips well over target; the measurement round covered in [the next section](02-platform.md#round-two-what-production-revealed-that-the-benchmark-couldnt) brought the median from 24–28s down to **7.7s** (across the 8 voice traces in the 7-day production window). Public validation at scale is still ongoing — transcription quality varies across the language set, and synthesized output formatting is still being refined.
-
-<p align="center">
-  <img src="images/image_messaging_ss.png" alt="WhatsApp screenshot of the agent correctly describing a submitted photo's colour and detail, declining to guess the dog's breed since that's outside its scope, and redirecting cleanly to eSIM help" width="420"/>
-  <br/>
-  <em>The production number, 30 August 2026, 21:03–22:16 (WhatsApp lines 1781–1792). Native image understanding on the happy path — correct on what's visible, honest about what isn't its job, and a clean redirect back to the actual product. The $32.09 is the 20:49 balance of $33.72, shown in Phase 3, less the $1.63 plan bought from the wallet at 20:50.</em>
-</p>
-
-<p align="center">
-  <img src="images/multimodal_ss_2.jpeg" alt="A second image example on Telegram: a phone home-screen screenshot sent mid-conversation after a run of voice notes, with the agent acknowledging what it shows" width="420"/>
-  <br/>
-  <em>26 July 2026, 00:00–00:03 (#4867–4874). A second example, deliberately unrelated to eSIMs, sent in the middle of a voice conversation — the modalities mix freely within one thread. The agent's voice note at 00:01, the one marked 00:03, is the "Sparkles" clip above (#4868), and the typed reply at 00:03 ends in the same ✨.</em>
-</p>
+How it works, what it took to make it fast, and where it stood at handover are in [Voice and Images](06-voice.md).
 
 ---
 
