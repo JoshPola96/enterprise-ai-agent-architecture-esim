@@ -67,7 +67,6 @@ A production AI agent handling the complete eSIM customer lifecycle — discover
 | **Running cost** | **About $17 a month**, development included, at handover list prices: a €14 server and a $10-a-year domain, with the dev tunnel, CI/CD, secret scanning, tracing and the edge on free plans. Per use: $0.005 a WhatsApp message, in or out, and about 2.3¢ of LLM a conversation at the paid rate before caching, though at its traffic production ran almost entirely on Gemini's free tier. Speech, guards, reranking and data stores are self-hosted ([breakdown](docs/09-evidence.md#economics)) |
 | **Recognition** | Selected **top 5 of 39** at an investor pitch · **#5** in F6S's AI company ranking for Sheridan, Wyoming, where the company is registered ([May 2026](#recognition)) |
 | **On the record** | **2,385** test messages exported from Telegram and WhatsApp, platform-timestamped, the wallet balance agreeing to the cent across both · native screenshots and original voice notes, hashed, every redaction reproducible from its original · [the exhibits](#from-the-test-logs) |
-| **Authorship** | **494** commits from 21 July 2025 to 5 August 2026, every one under my name · [month by month](docs/01-timeline.md#thirteen-months-in-the-history) |
 
 **The model set, all on CPU:** three INT8 ONNX models in the request path — Meta's Llama Prompt Guard 2 for injection classification, a multilingual NER model for PII detection, and a cross-encoder reranker — plus self-hosted speech (faster-whisper at int8 and Piper TTS) and an offline-trained XGBoost risk classifier exported to ONNX.
 
@@ -202,7 +201,7 @@ The comment goes on, with characteristic humour, to thank "our dear hackers :)" 
 
 ## My Role
 
-I owned the full technical surface of the AI platform — as sole AI engineer and architect, alongside a separate in-house team responsible for the company's core backend and frontend. There is no layer of the agent platform I didn't design, build, break, and repair. The codebase's history at handover holds 494 commits over thirteen months, every one under my name ([month by month](docs/01-timeline.md#thirteen-months-in-the-history)).
+I owned the full technical surface of the AI platform — as sole AI engineer and architect, alongside a separate in-house team responsible for the company's core backend and frontend. There is no layer of the agent platform I didn't design, build, break, and repair.
 
 **AI & Machine Learning** — LangGraph agent architecture and state design; hybrid retrieval including fusion strategy, reranking, chunking and knowledge-base engineering; system prompt architecture and measured compression across iterative passes; explicit prompt caching; ONNX inference pipelines for reranking, injection classification and NER; an offline risk classifier with leakage-safe features and promotion gates; a self-hosted speech pipeline with benchmark-driven model selection; an LLM-as-judge harness for testing, model selection and production quality review.
 
