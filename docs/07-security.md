@@ -290,7 +290,7 @@ New sign-ups are scored **0–100** against the ban-shadow index — name, email
 
 ### Free-trial anti-farming
 
-Trial claims are locked at **two levels simultaneously** — per contact channel and per master identity — each with a one-year TTL, backed by a database timestamp as the source of truth. Claiming the trial proactively locks *every* channel linked to that user. So a user can't claim on WhatsApp and then immediately try again from a freshly registered Telegram identity before the two accounts have even been merged; the channel-level lock catches it first.
+Trial claims are locked at **two levels simultaneously** — per contact channel and per master identity — each with a one-year TTL, backed by a database timestamp as the source of truth. Claiming the trial proactively locks *every* channel linked to that user. So a user can't claim on WhatsApp and then immediately try again from a freshly registered Telegram identity before the two accounts have even been merged; the channel-level lock catches it first. Before either lock, the claim tool checks for a passed human verification itself, whatever gate the conversation already went through: defence in depth on the one action that gives something away.
 
 ### System-tag spoof sanitisation
 
@@ -526,7 +526,7 @@ flowchart TD
 Three governance decisions sit in that diagram:
 
 - **Human labels survive retraining.** Rows carry a label source, and the nightly upsert keeps a manual label rather than overwriting it. Otherwise the scheduled job would quietly revert exactly the human judgements the review process exists to capture.
-- **Training refuses to promote a worse model.** Below any gate it leaves the trusted model in place. A model trained on twelve rows is not an improvement.
+- **Training refuses to promote a worse model.** Below any gate it leaves the trusted model in place. A model trained on twelve rows is not an improvement. It also refuses to train at all without enough labelled classes: a model trained on one dominant class predicts that class for everyone, and at the block threshold it is worse than no model, because it looks like it is working.
 - **The scheduled retrain never enables inference.** Inference ships **off by default**. Turning it on is a human decision made after reading the report. An automated loop that decides for itself when to start blocking users is the ungoverned path this whole architecture is designed against — and it would be about four lines of code to build by accident.
 
 When enabled, a malicious probability above 0.65 is logged and above 0.90 contributes to a block.
