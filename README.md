@@ -129,6 +129,7 @@ The full component diagram is in [System Architecture](docs/08-operations.md#sys
 ## Evolution at a Glance
 
 ```mermaid
+%%{init: {"gantt": {"useWidth": 780, "fontSize": 14, "sectionFontSize": 14, "barHeight": 24, "barGap": 6, "leftPadding": 150, "rightPadding": 20}}}%%
 gantt
     title July 2025 to August 2026
     dateFormat YYYY-MM-DD

@@ -16,6 +16,7 @@ I took a research-first path rather than reaching for a managed chatbot platform
 By handover in August 2026, thirteen months in, the same system handled discovery, authentication, purchase, provisioning, proactive post-purchase engagement, multimodal input, and adversarial traffic — autonomously, across two channels, on one CPU box.
 
 ```mermaid
+%%{init: {"gantt": {"useWidth": 780, "fontSize": 14, "sectionFontSize": 14, "barHeight": 24, "barGap": 6, "leftPadding": 150, "rightPadding": 20}}}%%
 gantt
     title Seven phases, July 2025 to August 2026
     dateFormat YYYY-MM-DD
