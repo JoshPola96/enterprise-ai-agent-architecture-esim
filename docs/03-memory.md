@@ -58,7 +58,7 @@ That choice matters operationally more than it sounds. There is no in-applicatio
 Multi-query retrieval generalises this: when the agent expands one question into several sub-queries, they're deduplicated, short ones dropped, prefetch limits scaled with query count to keep the candidate pool proportional, and the final rerank targets the *original* user query rather than any single expansion. The agent writes those sub-queries itself, three to five per question, and the tool's description teaches it two styles: dense keywords for facts such as operators and coverage, a natural-language question for procedures and policy, the country always named, and the angle varied across the set.
 
 ```mermaid
-flowchart LR
+flowchart TB
     Q["Query"] --> EC{"L1 in-process cache,<br/>then L2 Redis"}
     EC -- miss --> EMB["Gemini embedding"]
     EC -- hit --> DV["Dense vector"]

@@ -135,6 +135,8 @@ quadrantChart
 
 **Confirm the config you're debugging is the config that's running.** Containers fix their environment at creation, and an idempotent "start" command that skips recreating an existing container will happily report success while the process keeps its old values. No error, no warning — just every experiment after that point being invalid. When something "isn't taking effect", verify the process actually restarted before you go near the code. Two more of the traps I documented for the next engineer have the same shape: a new security-guard setting has to be passed through where the guard is built, or it is set, documented and ignored; and one variable picks the environment file for the app, the scheduled jobs and the container tooling alike, so the three cannot quietly read different configurations.
 
+**Write the unit into every duration.** The agent's 90-day session rested on one duration setting in the upstream's configuration. It was first given as a bare count of seconds, 7776000, and corrected to `90d` within two hours, and the correction mattered more than it looks: the widely used [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken#usage) library reads a number as seconds but a unitless string as milliseconds, and an environment variable is always a string. Read that way, 7776000 is about two hours.
+
 **Write the failure modes down before you build the optimisation.** For explicit prompt caching, every failure mode I'd listed in advance turned out to be the actual design constraint rather than an edge case — including one that made the obvious implementation impossible. The notes were worth more than the code.
 
 **Component benchmarks don't compose into end-to-end numbers.** Memory figures transfer between machines; latency figures don't, and the gap is rarely a clean hardware ratio you can multiply through. I lost time reasoning from an assumed slowdown factor before noticing that the benchmark had timed one model in isolation while production was paying for a whole pipeline — including two pieces of waste the benchmark structurally could not have shown. Instrument the real path; don't extrapolate to it.
@@ -160,6 +162,8 @@ quadrantChart
 **Validation is an abuse signal, not just a correctness check.** Entropy bounds, keyboard-walk detection, and structural email heuristics caught farming patterns no rate limiter would have.
 
 **Security has to be architectural — and provable.** Rate limiting bolted on after launch is a patch. Pre-inference classification, isolated networking, fail-closed defaults, and adversarial instrumentation are structure. Then load-test it adversarially, because an untested guard layer is a hypothesis.
+
+**Never hold a database transaction open across a network call.** On 1 April I traced a run of upstream 500s during the purchase work to an external API call made inside a database transaction. The transaction keeps its locks for as long as the remote call takes, and if the call fails or times out, the database and the outside world disagree about what happened. It was taken up the same day. The standard shape keeps the two apart: commit the local change together with a record of the call to make, then make the call from that record, the [transactional outbox](https://microservices.io/patterns/data/transactional-outbox.html).
 
 **Small database decisions compound.** Time-ordered keys instead of random ones eliminated an entire class of index fragmentation with zero application change. Look for those.
 
@@ -187,7 +191,11 @@ quadrantChart
 
 **Agree what "working" means before you are measured on it.** When the outcome you are judged on runs through a system you don't own, name the boundary in writing: what your layer sends, what it receives, and what it logs. Then "it works" can be checked at your side of the line, and a failure on the other side cannot quietly become yours.
 
-**Ask for a way to test what you depend on, and keep the request on record.** Without a staging line or a stress test for the upstream, the first test of its every change is production. The written request is what shows, later, where that risk was known to sit.
+**Ask for a way to test what you depend on, and keep the request on record.** Without a staging line or a stress test for the upstream, the first test of its every change is production. The written request is what shows, later, where that risk was known to sit. If the agreement already promises a staging environment, quote it in the request.
+
+**Keep a decision log, and ask for the reason when a design changes.** Two written specs for the same sign-in flow, eight days apart, disagreed on whether a returning number needed to log in at all, and neither said why. A one-line record of each decision and its reason, the practice [architecture decision records](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions) formalise, turns a reversal into a requirement; without it, the work is measured against whichever version someone remembers.
+
+**Blameless is not causeless.** Not caring who is at fault is the right instinct about people and the wrong one about systems. On a split team, a failure that crosses the boundary needs its location settled, in writing, before someone is asked to make it go away, or it gets fixed on the wrong side. The [postmortem practice](https://sre.google/sre-book/postmortem-culture/) this borrows from is blameless about people and exact about causes.
 
 **Constraints are a design tool.** Nearly every decision I'm proudest of exists because the cheap path was closed. A CPU-only budget forced quantized inference, layered caching, and honest trade-offs. I'd take that pressure again deliberately.
 
@@ -277,7 +285,6 @@ The PII scrubber has recognizers for three of these, the ICCID, EID and IMEI ([0
 | **RTF** | Real-time factor: processing time over audio length. 5.56 seconds for a 20.7-second clip is 0.27 |
 | **INT8 quantisation** | Storing a model's weights as 8-bit integers: smaller and faster on CPU, at a small cost in accuracy |
 | **P50, P90** | The value half, or nine in ten, of measurements fall below |
-
 
 ### Abbreviations
 

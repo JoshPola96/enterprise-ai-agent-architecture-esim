@@ -57,8 +57,7 @@ flowchart TB
     AG --> CM
     AG --> RAG
     AG --> DEL
-    DEL --> TG
-    DEL --> WA
+    DEL -. "replies" .-> CH
     SM --> PG
     SM --> RD
     CM --> PG
@@ -68,6 +67,7 @@ flowchart TB
     STR --> RD
     PR --> GF
     LK --> GF
+    DATA ~~~ OBS
 ```
 
 All services containerised on an internal bridge network. No container port is publicly exposed; all external traffic enters through Nginx exclusively.
@@ -343,7 +343,7 @@ Prometheus's own guidance is to [initialise known label values to zero](https://
 ## Delivery Pipeline & Operations
 
 ```mermaid
-flowchart LR
+flowchart TB
     PR["Pull request"] --> L["ruff + mypy<br/>fail fast"]
     L --> B["Build once<br/>production target"]
     B --> REG["GHCR<br/>PR-scoped tag"]

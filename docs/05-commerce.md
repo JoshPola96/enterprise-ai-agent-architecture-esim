@@ -94,18 +94,18 @@ sequenceDiagram
     BE->>WH: Event with idempotency key
     WH-->>BE: 202 Accepted
     WH->>RS: XADD
-    RS->>W: Consumer group delivers to exactly one worker
-    W->>W: SET NX claim · duplicate? acknowledge and skip
-    W->>W: Resolve user by ID, email hash or phone hash
-    W->>W: Ban check · dedupe by platform and chat ID
+    RS->>W: Consumer group delivers<br/>to exactly one worker
+    W->>W: SET NX claim · duplicate?<br/>acknowledge and skip
+    W->>W: Resolve user by ID,<br/>email hash or phone hash
+    W->>W: Ban check · dedupe by<br/>platform and chat ID
     alt User has a channel
         W->>AG: Framed event, full context
-        AG->>U: Reply in the agent's own voice
+        AG->>U: Reply in the<br/>agent's own voice
     else No conversation yet
-        W->>W: Hold in pending store, one-hour TTL
+        W->>W: Hold in pending store,<br/>one-hour TTL
     end
     W->>RS: XACK
-    Note over W,RS: Crashed worker's messages reclaimed after the stale-idle threshold. Exhausted retries go to the dead-letter stream
+    Note over W,RS: Crashed worker's messages reclaimed after<br/>the stale-idle threshold. Exhausted retries<br/>go to the dead-letter stream
 ```
 
 **What "in the agent's own voice" means.** The event reaches the agent as a tagged turn, and the prompt treats it as the agent reaching out, not replying: it opens with the news itself, never with "how can I help?", and follows the delivery instructions each event carries inline. A broadcast is relayed as the agent's own words and never mistaken for something the user said.

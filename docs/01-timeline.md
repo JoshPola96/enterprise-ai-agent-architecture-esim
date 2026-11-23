@@ -64,6 +64,22 @@ I think this is the more interesting engineering problem, and the more transfera
 
 ---
 
+## Thirteen Months in the History
+
+The codebase's history at handover holds **592 commits** across its branches, from 21 July 2025 to 5 August 2026, every one of them under my name. By month:
+
+```mermaid
+xychart-beta
+    title "Commits per month, July 2025 – August 2026"
+    x-axis ["Jul 25", "Aug 25", "Sep 25", "Oct 25", "Nov 25", "Dec 25", "Jan 26", "Feb 26", "Mar 26", "Apr 26", "May 26", "Jun 26", "Jul 26", "Aug 26"]
+    y-axis "commits" 0 --> 120
+    bar [6, 16, 6, 27, 115, 50, 38, 25, 38, 87, 71, 26, 43, 44]
+```
+
+The peak is November 2025, in Phase 3, when identity, memory and hardening landed together. The second is April 2026, at the start of Phase 5's security work under live attack. The last bar covers only 1–5 August.
+
+---
+
 ## Phase 1 — Multi-Agent Research (Jul–Sep 2025)
 
 **Hypothesis:** specialised agents, coordinating.
@@ -141,7 +157,7 @@ A publicly reachable agent with a free-tier offer is an attack surface. It was f
 The result is ten defence layers from the CDN edge to the database column, with the application's own gates sitting in front of the model rather than instructions sitting inside it:
 
 ```mermaid
-flowchart LR
+flowchart TB
     A["Edge and host<br/>WAF · firewall · fail2ban"] --> B["Webhook<br/>signatures · honeypot"]
     B --> C["Human gate<br/>Turnstile · contact share"]
     C --> D["Behavioural gate<br/>limits · Bloom · ban shadow"]

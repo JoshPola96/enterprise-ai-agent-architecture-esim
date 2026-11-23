@@ -12,32 +12,33 @@
 A typed message from a verified user, in the order the system handles it.
 
 ```mermaid
+%%{init: {"sequence": {"actorMargin": 24, "width": 120, "noteMargin": 6, "messageMargin": 30}}}%%
 sequenceDiagram
     autonumber
     participant P as Platform
     participant R as Webhook
-    participant G as Behavioural and semantic gates
-    participant S as Inbound stream
-    participant M as Messaging pipeline
+    participant G as Behavioural and<br/>semantic gates
+    participant S as Inbound<br/>stream
+    participant M as Messaging<br/>pipeline
     participant A as Agent
     participant T as Tools
-    participant C as Memory and retrieval
-    participant D as Formatter · splitter · clients
+    participant C as Memory and<br/>retrieval
+    participant D as Formatter ·<br/>splitter · clients
     P->>R: Webhook update
-    R->>R: Verification state · coalesce for half a second
-    R->>G: Behavioural gate, re-login check, injection classifier
+    R->>R: Verification state ·<br/>coalesce for half a second
+    R->>G: Behavioural gate, re-login<br/>check, injection classifier
     G-->>R: Clean
     R->>S: Enqueue on the inbound stream
     S->>M: A worker claims it
-    M->>M: Voice or image intake · rate limit · identity · suspension gate
-    M->>A: Run, under the concurrency limit
-    A->>C: Fetch working history and recalled memories
+    M->>M: Voice or image intake · rate limit<br/>identity · suspension gate
+    M->>A: Run, under the<br/>concurrency limit
+    A->>C: Fetch working history<br/>and recalled memories
     loop Until the output tool is called
         A->>A: Model call · router
-        A->>T: Tool calls, checked against the registry
+        A->>T: Tool calls, checked<br/>against the registry
         T-->>A: Results
     end
-    A->>C: Scrub, then store the exchange
+    A->>C: Scrub, then store<br/>the exchange
     A-->>M: Final response
     M->>D: Format · split · speak if voice
     D->>P: Send
