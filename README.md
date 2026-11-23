@@ -75,9 +75,9 @@ A production AI agent handling the complete eSIM customer lifecycle — discover
   <img src="docs/images/grafana_ss_1.jpeg" alt="Live Grafana operator dashboard showing conversations, answer success rate, typical reply time, and host and container capacity gauges" width="760"/>
 </p>
 <p align="center">
-  <img src="docs/images/latest_login_flow_ss1.jpeg" alt="WhatsApp screenshot of the login-relay authentication flow, including a fresh link issued on request and the welcome offer after login" width="430"/>
+  <img src="docs/images/latest_login_flow_ss1.jpeg" align="top" alt="WhatsApp screenshot of the login-relay authentication flow, including a fresh link issued on request and the welcome offer after login" width="430"/>
   &nbsp;&nbsp;
-  <img src="docs/images/purchase_flow_explanation_ss.jpeg" alt="The agent explaining its own purchase-flow logic in plain language, matching the documented consultant behaviour" width="250"/>
+  <img src="docs/images/purchase_flow_explanation_ss.jpeg" align="top" alt="The agent explaining its own purchase-flow logic in plain language, matching the documented consultant behaviour" width="250"/>
 </p>
 <p align="center"><em>Not staged: the live operator dashboard; the login relay on the production domain, on a second test account (link tokens, code and eSIM identifiers boxed); and the agent describing its own design when asked, on the production number on 13 March 2026 (WhatsApp lines 690–701). Dashboard panels reflect their own time windows; the measured 7-day figures are in <a href="docs/09-evidence.md#measured-on-production-7-day-rolling-averages">Performance</a>.</em></p>
 

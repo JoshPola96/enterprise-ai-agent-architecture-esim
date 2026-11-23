@@ -214,8 +214,8 @@ $0.32 is $1.95 − $1.63: one debit. A week earlier the same request produced tw
 It was not the first time, and the fixes in [02](02-agent.md#temperature-attention-and-the-wrong-product-id) came in layers. Temperature came down first, for the fabrication. Then came a per-user cache of exactly what each user had just been shown, which the purchase tool checks before it will execute, and the promotional plan's identifier moved out of the prompt and into the tool, so the model has no salient wrong answer to reach for. Nine days later, the same plan from the balance:
 
 <p align="center">
-  <img src="test-log/purchase_confirmed_chat.png" alt="Telegram, 2 August 2026: plan options by voice and text, then 'Plan Purchased Successfully' for the $1.63 Türkiye plan with 'Your new account balance is $33.72'" width="340"/>
-  <img src="test-log/balance_chat.png" alt="Telegram, 3 August 2026: asked for the balance, the agent replies 'Your current wallet balance is $33.72', followed by a run of voice notes" width="340"/>
+  <img src="test-log/purchase_confirmed_chat.png" alt="Telegram, 2 August 2026: plan options by voice and text, then 'Plan Purchased Successfully' for the $1.63 Türkiye plan with 'Your new account balance is $33.72'" width="321"/>
+  <img src="test-log/balance_chat.png" alt="Telegram, 3 August 2026: asked for the balance, the agent replies 'Your current wallet balance is $33.72', followed by a run of voice notes" width="438"/>
   <br/>
   <em>Left: 2 August 2026, 21:05–21:07 (#5013–5019); the eSIM identifier is boxed. Right: a fresh balance query five hours later, 3 August, 02:06–02:11 (#5031–5040).</em>
 </p>
