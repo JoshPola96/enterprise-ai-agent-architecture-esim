@@ -33,43 +33,27 @@
 
 ---
 
-## A Note Before You Read
-
-When I started this work in July 2025, transaction-capable autonomous agents — agents that hold state, manage identity, and complete a purchase end to end — were not yet a commercial category.
-
-The public timeline bears that out. OpenAI's in-chat checkout, Instant Checkout, [launched on 29 September 2025](https://openai.com/index/buy-it-in-chatgpt/). Google [unveiled its Universal Commerce Protocol](https://blog.google/products/ads-commerce/agentic-commerce-ai-tools-protocol-retailers-platforms/) for agentic shopping on 11 January 2026. Through the first quarter of 2026, this agent went live provisioning eSIMs and taking payments from real customers inside WhatsApp and Telegram.
-
-The more interesting fact isn't "early". OpenAI [wound Instant Checkout down](https://www.forrester.com/blogs/what-it-means-that-the-leader-in-agentic-commerce-just-pulled-back) in March 2026, around five months after launch: only about a dozen Shopify merchants had gone live, and Walmart [reported](https://www.retaildive.com/news/walmart-sparky-chatgpt-instant-checkout/815647/) that purchases completed inside ChatGPT converted at roughly a third of the rate of click-through. This system is a different scale and a different vertical — a focused eSIM concierge, not a general marketplace — so the comparison isn't "this beat that". It's narrower and more useful. A purchase journey that starts, confirms and completes inside the conversation — wallet payments settling in the thread, card payments through a hosted checkout link, the activation code delivered back into the chat — was still running here at handover in August 2026, re-integrated through a steady stream of backend changes along the way, while a far larger implementation of a similar pattern had already been walked back.
-
-That gap is why this document exists. The core problems here — exactly-once processing of proactive events, cross-platform identity resolution, intent preservation across authentication boundaries, prompt-injection defence inside the request path — had to be solved from first principles, because there was no reference implementation to borrow from. Some of it would be built differently today with tooling that now exists. That's the point. These are field notes from before the playbook.
-
-**What this is:** an architectural and engineering case study of a production system I designed, built and operated — written as a technical narrative. What I tried, what broke, what I measured, what I chose instead.
-
-**What this is not:** an implementation guide. No source code, business logic, schemas or credentials appear here. Security thresholds are given where they're instructive, because the defensive design is meant to be reusable.
-
----
-
 ## TL;DR
 
 A production AI agent handling the complete eSIM customer lifecycle — discovery, authentication, payment, provisioning, activation, troubleshooting — autonomously, inside WhatsApp and Telegram, in text, voice and images.
 
 | | |
 |---|---|
+| **Under adversarial load** | **19,164** malicious payloads absorbed at **319 RPS** while legitimate traffic held **100% success** (bench, pre-multimodal) |
+| **Tool accuracy** | **>99%** across the integration suite, recorded in December 2025 when tool validation landed · 26 schema-validated tools at handover |
+| **Running cost** | **About $17 a month**, development included, at handover list prices: a €14 server and a $10-a-year domain, with the dev tunnel, CI/CD, secret scanning, tracing and the edge on free plans. Per use: $0.005 a WhatsApp message, in or out, and about 2.3¢ of LLM a conversation at the paid rate before caching, though at its traffic production ran almost entirely on Gemini's free tier. Speech, guards, reranking and data stores are self-hosted ([breakdown](docs/09-evidence.md#economics)) |
+| **Hardware** | One 8 vCPU CPU-only VPS — no GPU, anywhere |
+| **Recognition** | Selected **top 5 of 39** at an investor pitch · **#5** in F6S's AI company ranking for Sheridan, Wyoming, where the company is registered ([May 2026](#recognition)) |
+| **On the record** | **2,385** test messages exported from Telegram and WhatsApp, platform-timestamped, the wallet balance agreeing to the cent across both · native screenshots and original voice notes, hashed, every redaction reproducible from its original · [the exhibits](#from-the-test-logs) |
+| **Authorship** | **592** commits from 21 July 2025 to 5 August 2026, every one under my name · [month by month](docs/01-timeline.md#thirteen-months-in-the-history) |
 | **Response time** | **P50 9.3s** · P90 20.7s over a 7-day production window — dominated by LLM output tokens, see [Performance](docs/09-evidence.md#performance) |
 | **Voice round-trip** | **P50 7.7s** across 8 production traces, down from 24–28s after a measurement-driven optimisation round |
-| **Tool accuracy** | **>99%** across the integration suite, recorded in December 2025 when tool validation landed · 26 schema-validated tools at handover |
-| **Under adversarial load** | **19,164** malicious payloads absorbed at **319 RPS** while legitimate traffic held **100% success** (bench, pre-multimodal) |
 | **Injection classification** | p50 **23.8ms** · p95 32.2ms — INT8 on CPU, inline in the request path |
 | **Webhook ingest** | median 5ms · p95 9ms · p99 14ms · 100% delivery (bench) |
 | **System prompt** | **82%** token compression with no measured behaviour loss; ~15k-token static prefix served from an explicit cache · [its rules, one by one](docs/02-agent.md#the-agent-itself) |
 | **Testing** | 159 unit and contract tests · 49 LLM-judged journey scenarios · a live end-to-end driver with nothing mocked |
 | **Observability** | 51 application metrics · 111-panel operator dashboard in 11 rows · 8 alert rules as code |
 | **Languages** | Agent mirrors the user's language · system text in 10 locales incl. RTL · speech voice map covers 32 languages |
-| **Hardware** | One 8 vCPU CPU-only VPS — no GPU, anywhere |
-| **Running cost** | **About $17 a month**, development included, at handover list prices: a €14 server and a $10-a-year domain, with the dev tunnel, CI/CD, secret scanning, tracing and the edge on free plans. Per use: $0.005 a WhatsApp message, in or out, and about 2.3¢ of LLM a conversation at the paid rate before caching, though at its traffic production ran almost entirely on Gemini's free tier. Speech, guards, reranking and data stores are self-hosted ([breakdown](docs/09-evidence.md#economics)) |
-| **Recognition** | Selected **top 5 of 39** at an investor pitch · **#5** in F6S's AI company ranking for Sheridan, Wyoming, where the company is registered ([May 2026](#recognition)) |
-| **On the record** | **2,385** test messages exported from Telegram and WhatsApp, platform-timestamped, the wallet balance agreeing to the cent across both · native screenshots and original voice notes, hashed, every redaction reproducible from its original · [the exhibits](#from-the-test-logs) |
-| **Authorship** | **592** commits from 21 July 2025 to 5 August 2026, every one under my name · [month by month](docs/01-timeline.md#thirteen-months-in-the-history) |
 
 **The model set, all on CPU:** three INT8 ONNX models in the request path — Meta's Llama Prompt Guard 2 for injection classification, a multilingual NER model for PII detection, and a cross-encoder reranker — plus self-hosted speech (faster-whisper at int8 and Piper TTS) and an offline-trained XGBoost risk classifier exported to ONNX.
 
@@ -84,6 +68,22 @@ A production AI agent handling the complete eSIM customer lifecycle — discover
 <p align="center"><em>Not staged: the live operator dashboard; the login relay on the production domain, on a second test account (link tokens, code and eSIM identifiers boxed); and the agent describing its own design when asked, on the production number on 13 March 2026 (WhatsApp lines 690–701). Dashboard panels reflect their own time windows; the measured 7-day figures are in <a href="docs/09-evidence.md#measured-on-production-7-day-rolling-averages">Performance</a>.</em></p>
 
 **Short on time?** The [case study](#the-case-study) has a route for each reader: hiring, learning, building or researching.
+
+---
+
+## Before There Was a Playbook
+
+When I started this work in July 2025, transaction-capable autonomous agents — agents that hold state, manage identity, and complete a purchase end to end — were not yet a commercial category.
+
+The public timeline bears that out. OpenAI's in-chat checkout, Instant Checkout, [launched on 29 September 2025](https://openai.com/index/buy-it-in-chatgpt/). Google [unveiled its Universal Commerce Protocol](https://blog.google/products/ads-commerce/agentic-commerce-ai-tools-protocol-retailers-platforms/) for agentic shopping on 11 January 2026. Through the first quarter of 2026, this agent went live provisioning eSIMs and taking payments from real customers inside WhatsApp and Telegram.
+
+The more interesting fact isn't "early". OpenAI [wound Instant Checkout down](https://www.forrester.com/blogs/what-it-means-that-the-leader-in-agentic-commerce-just-pulled-back) in March 2026, around five months after launch: only about a dozen Shopify merchants had gone live, and Walmart [reported](https://www.retaildive.com/news/walmart-sparky-chatgpt-instant-checkout/815647/) that purchases completed inside ChatGPT converted at roughly a third of the rate of click-through. This system is a different scale and a different vertical — a focused eSIM concierge, not a general marketplace — so the comparison isn't "this beat that". It's narrower and more useful. A purchase journey that starts, confirms and completes inside the conversation — wallet payments settling in the thread, card payments through a hosted checkout link, the activation code delivered back into the chat — was still running here at handover in August 2026, re-integrated through a steady stream of backend changes along the way, while a far larger implementation of a similar pattern had already been walked back.
+
+That gap is why this document exists. The core problems here — exactly-once processing of proactive events, cross-platform identity resolution, intent preservation across authentication boundaries, prompt-injection defence inside the request path — had to be solved from first principles, because there was no reference implementation to borrow from. Some of it would be built differently today with tooling that now exists. That's the point. These are field notes from before the playbook.
+
+**What this is:** an architectural and engineering case study of a production system I designed, built and operated — written as a technical narrative. What I tried, what broke, what I measured, what I chose instead.
+
+**What this is not:** an implementation guide. No source code, business logic, schemas or credentials appear here. Security thresholds are given where they're instructive, because the defensive design is meant to be reusable.
 
 ---
 

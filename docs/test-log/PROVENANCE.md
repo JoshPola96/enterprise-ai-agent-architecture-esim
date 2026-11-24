@@ -9,7 +9,7 @@
 
 ## What is bound, and how
 
-- **The two chat exports**, Telegram's and WhatsApp's, are hashed in [`SHA256SUMS`](SHA256SUMS). Every message the paper cites, by Telegram id (`#4810`) or WhatsApp line, and every voice note, is inside them.
+- **The two chat exports**, Telegram's (1,777 messages) and WhatsApp's (608), are hashed in [`SHA256SUMS`](SHA256SUMS). Every message the paper cites, by Telegram id (`#4810`) or WhatsApp line, and every voice note, is inside them.
 - **Every file in [`audio/`](audio)** is an original voice note, byte for byte, hashed on its own.
 - **Every redacted screenshot** was made from an original whose hash is in `SHA256SUMS`, by the recipe below. The originals stay private because the boxes cover codes, contact details and eSIM identifiers; their hashes let them be checked later without revealing what is under the boxes.
 
