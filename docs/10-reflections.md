@@ -445,4 +445,4 @@ The main sources behind the paper, in one list.
 
 ---
 
-[&larr; Back to the case study](../README.md)
+[&larr; Back to the case study](../README.md) · [Next: Research Notes &rarr;](11-research-notes.md)

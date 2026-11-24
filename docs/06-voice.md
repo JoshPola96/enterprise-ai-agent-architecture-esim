@@ -160,4 +160,4 @@ https://github.com/user-attachments/assets/26fed592-2bb1-41a0-8331-981879a99378
 
 ---
 
-[&larr; Back to the case study](../README.md)
+[&larr; Back to the case study](../README.md) · [Next: Security Architecture &rarr;](07-security.md)

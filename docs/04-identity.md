@@ -197,4 +197,4 @@ The field's usual tool for keeping mocks honest is the **consumer-driven contrac
 
 ---
 
-[&larr; Back to the case study](../README.md)
+[&larr; Back to the case study](../README.md) · [Next: Commerce and Messaging &rarr;](05-commerce.md)

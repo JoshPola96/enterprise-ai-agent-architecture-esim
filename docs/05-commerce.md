@@ -327,4 +327,4 @@ It's the same lesson as everywhere else in this document. The unreliable path wa
 
 ---
 
-[&larr; Back to the case study](../README.md)
+[&larr; Back to the case study](../README.md) · [Next: Voice and Images &rarr;](06-voice.md)

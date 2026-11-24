@@ -330,4 +330,4 @@ Every number in this case study was measured, and each has limits on what it can
 
 ---
 
-[&larr; Back to the case study](../README.md)
+[&larr; Back to the case study](../README.md) · [Next: Limitations, Next Steps and Lessons &rarr;](10-reflections.md)

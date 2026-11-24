@@ -20,6 +20,8 @@
 
 </p>
 
+<p align="center"><a href="#tldr">TL;DR</a> · <a href="#the-case-study">The case study</a> · <a href="#ideas-worth-taking">Ideas worth taking</a> · <a href="#from-the-test-logs">The test logs</a> · <a href="#contact">Contact</a></p>
+
 ---
 
 > **Scope** · A production case study of a system that served real customers. Architecture, trade-offs, measurements and failures are documented in full. Source code is not included.
@@ -80,6 +82,8 @@ A production AI agent handling the complete eSIM customer lifecycle — discover
   <img src="docs/images/purchase_flow_explanation_ss.jpeg" align="top" alt="The agent explaining its own purchase-flow logic in plain language, matching the documented consultant behaviour" width="250"/>
 </p>
 <p align="center"><em>Not staged: the live operator dashboard; the login relay on the production domain, on a second test account (link tokens, code and eSIM identifiers boxed); and the agent describing its own design when asked, on the production number on 13 March 2026 (WhatsApp lines 690–701). Dashboard panels reflect their own time windows; the measured 7-day figures are in <a href="docs/09-evidence.md#measured-on-production-7-day-rolling-averages">Performance</a>.</em></p>
+
+**Short on time?** The [case study](#the-case-study) has a route for each reader: hiring, learning, building or researching.
 
 ---
 
@@ -218,7 +222,7 @@ An engineering narrative, told by what the system does. Start anywhere — each 
 
 | | Chapter | What's in it |
 |---|---|---|
-| **01** | [**Timeline — Seven Phases**](docs/01-timeline.md) | The brief, the constraint that shaped every decision, and seven phases from multi-agent research prototype to transaction-capable production agent, each linked to the chapter that tells it in full, with the codebase's history month by month. |
+| **01** | [**Timeline — Seven Phases**](docs/01-timeline.md) | The brief, the narrow first phase it was scoped into, the constraint that shaped every decision, and seven phases from multi-agent research prototype to transaction-capable production agent, each linked to the chapter that tells it in full, with the codebase's history month by month. |
 | **02** | [**The Agent**](docs/02-agent.md) | One message from start to finish, the agent loop and its failure ladder, the rules it follows, from sizing a plan to troubleshooting, the rules that keep it honest, the sixteen-section system prompt and its cache, a 24-run model evaluation and why the decision stayed open, and the wrong-product-ID failure that no prompt or temperature setting could fix. |
 | **03** | [**Memory and Knowledge**](docs/03-memory.md) | Three memory tiers, native hybrid retrieval, reranking on CPU, caching and multi-worker indexing, and how the retrieval stack got there. |
 | **04** | [**Identity, Login and Sessions**](docs/04-identity.md) | One person across channels, phantom login, session expiry and lifetime, the verification code the agent repeated, the incident that redefined "tested", and the upstream contract as actually observed. |
@@ -235,10 +239,11 @@ An engineering narrative, told by what the system does. Start anywhere — each 
 |---|---|---|
 | **11** | [**Research Notes**](docs/11-research-notes.md) | Two experimental prototypes of published agentic techniques — a hierarchical plan–execute–reflect agent and an LLM-synthesised memory closer to Mem0 — presented as concepts, with their structural costs. |
 
-**Three ways through it:**
+**Four ways through it:**
 
 | If you are | Read |
 |---|---|
+| **Hiring or evaluating the work** | The [TL;DR](#tldr) and [My Role](#my-role), then the judgement in five stories: a model choice [measured instead of argued](docs/02-agent.md#so-i-measured-instead-of-arguing), a failure that [redefined "tested"](docs/04-identity.md#the-incident-that-redefined-tested), [dashboards that were lying](docs/08-operations.md#the-dashboards-were-lying-and-i-only-found-out-by-asking-them), a [live attack answered](docs/07-security.md#free-trial-anti-farming), and what [working with other teams](docs/10-reflections.md#working-with-other-teams) taught |
 | **Learning to build agents** | [01](docs/01-timeline.md) for the arc, then [The Agent](docs/02-agent.md) and the [wrong product ID](docs/02-agent.md#temperature-attention-and-the-wrong-product-id), with the [glossary](docs/10-reflections.md#glossary) open beside you, and [what the incidents show](docs/10-reflections.md#what-the-incidents-show) |
 | **Building one now** | [One message, start to finish](docs/02-agent.md#one-message-start-to-finish), [every path into the agent](docs/07-security.md#16-case-by-case-every-path-into-the-agent), [the incident that redefined "tested"](docs/04-identity.md#the-incident-that-redefined-tested), [proactive delivery](docs/05-commerce.md#proactive-delivery) and the [measured memory model](docs/08-operations.md#the-measured-memory-model) |
 | **Researching agents** | [Threats to validity](docs/09-evidence.md#threats-to-validity), the [model evaluation](docs/02-agent.md#the-model-selection-problem--and-how-far-it-got), [measurement provenance](docs/09-evidence.md#a-note-on-provenance), the [research notes](docs/11-research-notes.md) and the [open questions](docs/10-reflections.md#open-questions) |

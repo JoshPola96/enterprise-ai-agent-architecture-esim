@@ -381,4 +381,4 @@ Which is exactly the governance argument again, in a non-security setting. A pro
 
 ---
 
-[&larr; Back to the case study](../README.md)
+[&larr; Back to the case study](../README.md) · [Next: Memory and Knowledge &rarr;](03-memory.md)

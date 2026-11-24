@@ -790,4 +790,4 @@ The system does both, and the path table above states where each applies. The se
 
 ---
 
-[&larr; Back to the case study](../README.md)
+[&larr; Back to the case study](../README.md) · [Next: Running It &rarr;](08-operations.md)

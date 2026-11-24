@@ -206,4 +206,4 @@ How it works, what it took to make it fast, and where it stood at handover are i
 
 ---
 
-[&larr; Back to the case study](../README.md)
+[&larr; Back to the case study](../README.md) · [Next: The Agent &rarr;](02-agent.md)

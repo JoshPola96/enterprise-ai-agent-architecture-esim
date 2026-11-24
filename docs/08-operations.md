@@ -393,4 +393,4 @@ Three jobs land inside one hour, installed by two independent scripts that don't
 
 ---
 
-[&larr; Back to the case study](../README.md)
+[&larr; Back to the case study](../README.md) · [Next: Evaluation, Performance and Cost &rarr;](09-evidence.md)

@@ -123,4 +123,4 @@ What a stored memory can do once it is recalled, as an injection that outlives i
 
 ---
 
-[&larr; Back to the case study](../README.md)
+[&larr; Back to the case study](../README.md) · [Next: Identity, Login and Sessions &rarr;](04-identity.md)
