@@ -9,7 +9,7 @@
 
 ## Origin & Brief
 
-In July 2025 I was contracted as the sole AI engineer to build a conversational layer on top of an existing eSIM commerce platform. The brief was deliberately open-ended: build an AI agent infrastructure that can handle the full product lifecycle and troubleshooting in-chat, and scale without adding headcount.
+In July 2025 I was contracted as the sole AI engineer to build a conversational layer on top of an existing eSIM commerce platform. The brief was deliberately open-ended: build an AI agent infrastructure that can handle the full product lifecycle and troubleshooting in-chat, and scale without adding headcount. My proposal phased it, and the first phase was narrow by design: single-turn, one API call or one retrieval per message, on Telegram alone, with identity carried in a signed link rather than a login inside the chat. Multi-turn purchase, proactive alerts and WhatsApp were later phases. All three shipped; the signed link never did ([Login, Rebuilt Three Times](04-identity.md#login-rebuilt-three-times)).
 
 I took a research-first path rather than reaching for a managed chatbot platform — starting with a locally-hosted multi-agent setup to validate whether agentic workflows could handle real customer conversation at all, before committing to production infrastructure. That phase produced findings that directly shaped everything after it, including the decision to throw most of it away.
 

@@ -538,6 +538,8 @@ When enabled, a malicious probability above 0.65 is logged and above 0.90 contri
 
 **Training/serving skew is test-enforced.** The training script selects feature columns into a dataframe by name; the inference wrapper rebuilds the vector *positionally*. Reorder or insert a column and the model receives a shuffled vector and keeps returning confident, wrong labels, with no error anywhere. A contract test locks column order, clip bounds and the label map.
 
+**The training command checks that it can write its output before it trains.** The image runs as an unprivileged user, and a bind mount keeps the host directory's owner. If an earlier run left Docker to create the model directory, the directory belongs to root, and the export at the end of training fails after all the work is done. The command tests the directory first and stops within a second, with the fix in its message: fail before the expensive step, not after it.
+
 ---
 
 ## 12. Data Protection
@@ -614,6 +616,8 @@ flowchart TD
 One key drives two primitives. Fernet ciphertext differs on every write, so it's never usable in a query predicate. The derived HMAC produces deterministic lookup hashes for indexed columns and Redis keys, so **no PII ever enters a database index or Redis keyspace in plaintext** while lookups stay exact and fast.
 
 The rule enforced throughout: never query the encrypted column, always query its hash twin. Querying ciphertext isn't a performance mistake — it's a correctness bug, because it can never match. Encoding that as a schema convention rather than a code-review habit is what makes it hold. Changing the versioned domain tag rotates every lookup hash without touching the cipher key.
+
+**My proposal said salted SHA-256; the build couldn't use a salt.** The July 2025 plan, written against Turkey's data-protection law (KVKK), named salted SHA-256 for identifiers such as emails and ICCIDs. A salt per record makes two hashes of the same email differ, which is exactly what a lookup can't use: to find a row by email, the service has to compute the same hash again. A keyed HMAC keeps the hash repeatable and moves the secret from the salt into the key, so without the key a guessed email can't be tested against the column. (One secret salt shared by every row would be repeatable too, but that is a key, and HMAC is the construction built for keyed hashing.) The law draws its line in the same place. Whoever holds the key can link a hash back to a person, so a keyed hash is pseudonymisation in [GDPR](https://eur-lex.europa.eu/eli/reg/2016/679/oj)'s terms (Article 4(5)), and pseudonymised data is still personal data (Recital 26): the hash twin falls under the same retention and erasure rules as the value it stands in for.
 
 ---
 
