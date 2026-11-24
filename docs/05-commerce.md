@@ -71,7 +71,7 @@ The gift is offered unprompted on exactly two signals: a completed signup that c
 
 Agents are reactive by construction. They speak when spoken to. But the highest-value moment in this product is immediately *after* payment — the user has paid, is waiting, and needs their activation code. An agent that cannot initiate contact fails precisely where it matters most.
 
-The solution: **two Redis Streams consumer groups**, one for inbound user messages and one for backend-initiated events, sharing a common worker base. Inbound traffic is fanned out across workers so a burst on one platform can't starve the other; outbound events resolve the right delivery channel per user and dispatch through the same agent pipeline.
+The solution: **two Redis Streams consumer groups**, one for inbound user messages and one for backend-initiated events, sharing a common worker base. Inbound traffic is fanned out across workers so a burst on one platform can't starve the other; outbound events resolve the right delivery channel per user and dispatch through the same agent pipeline. The event contract started on the agent's side: when the question came up of how the agent could tell a user their payment had gone through, I wrote the webhook's integration spec that afternoon, 16 March 2026, and built the receiver (stream, worker, retries) before the backend could call it. The two sides were tested together over a tunnel on 22 March.
 
 The shared worker layer provides:
 
@@ -250,7 +250,7 @@ The splitter is also **code-fence aware**, which sounds fussy and isn't: a split
 
 **Message coalescing, because one intent can arrive as several events.** A forwarded batch, or a script firing fragments, lands as separate webhooks within milliseconds of each other. Treated naively that's several agent runs: several model calls, several tool budgets, and an agent answering the first fragment before the rest has arrived.
 
-Inbound messages are therefore buffered per user for half a second and joined before dispatch, with the first arrival winning a short lock that schedules the flush. The window is deliberately short: it merges near-simultaneous arrivals rather than waiting on someone still typing. Merging a person's three lines over four seconds needs a debounce that restarts on each arrival, with a cap so a steady typist still gets an answer; that was the next step, not what shipped.
+Inbound messages are therefore buffered per user for half a second and joined before dispatch, with the first arrival winning a short lock that schedules the flush. The window is deliberately short: it merges near-simultaneous arrivals rather than waiting on someone still typing. Merging a person's three lines over four seconds needs a debounce that restarts on each arrival, with a cap so a steady typist still gets an answer; that was the next step, not what shipped. The test log shows both shapes on 16 May, before the window went in on 29 May: nine digits sent within five seconds, the kind it merges, drew replies asking what "12" and "123" meant (#3352–3365); a word typed in three pieces two seconds apart, the kind that needs the debounce, drew five separate answers (#3344–3351).
 
 It closed a security hole too, which I didn't anticipate: the abuse guards now score the *whole* utterance rather than sub-threshold pieces, so splitting a payload across near-simultaneous messages stopped being a way around them. Worth noting the general shape — a UX fix and an abuse fix turned out to be the same change, because both were caused by treating one intent as several events.
 
