@@ -186,6 +186,8 @@ gantt
   <img src="docs/images/team_slide_2026-04.jpg" alt="Slide 13 of the company's presentation deck, titled Our Team: the founder, Joshua P. Polaprayil as AI/ML, a backend engineer and a frontend engineer" width="640"/>
 </p>
 
+**Public showcase — FestUp, spring 2026.** The agent was shown at FestUp, days before [my post about it](https://www.linkedin.com/feed/update/urn:li:activity:7457317711329677312/) on 5 May 2026. What stood out to me was how people used it: no instructions and no onboarding, they started typing and got what they needed. The free 2 GB Europe welcome plan was announced with it, and the [farming wave](docs/07-security.md#free-trial-anti-farming) that the security chapter answers began within two weeks.
+
 **Founder's public acknowledgement — June 2026.** On my [F6S announcement](https://www.linkedin.com/posts/josh33-peter10_esimtime-aiagents-esim-share-7467970557624360960-LKuY/), the company's founder [commented](https://www.linkedin.com/feed/update/urn:li:activity:7467970560543797249/?dashCommentUrn=urn%3Ali%3Afsd_comment%3A%287468040954906673153%2Curn%3Ali%3Aactivity%3A7467970560543797249%29):
 
 > At this stage, I feel it is my duty to thank my teammates Joshua Peter Polaprayil, Opeoluwa Adeyeri, and Zain Ali for their successful work, professional solutions, and especially for their efforts to keep our system secure.
