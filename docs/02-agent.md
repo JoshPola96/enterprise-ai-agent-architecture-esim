@@ -25,17 +25,17 @@ sequenceDiagram
     participant C as Memory and<br/>retrieval
     participant D as Formatter ·<br/>splitter · clients
     P->>R: Webhook update
-    R->>R: Verification state ·<br/>coalesce for half a second
-    R->>G: Behavioural gate, re-login<br/>check, injection classifier
+    R->>R: Verification state ·<br/>coalesce for<br/>half a second
+    R->>G: Behavioural gate,<br/>re-login check,<br/>injection classifier
     G-->>R: Clean
     R->>S: Enqueue on the inbound stream
     S->>M: A worker claims it
-    M->>M: Voice or image intake · rate limit<br/>identity · suspension gate
+    M->>M: Voice or image intake ·<br/>rate limit · identity ·<br/>suspension gate
     M->>A: Run, under the<br/>concurrency limit
     A->>C: Fetch working history<br/>and recalled memories
     loop Until the output tool is called
         A->>A: Model call · router
-        A->>T: Tool calls, checked<br/>against the registry
+        A->>T: Tool calls,<br/>checked against<br/>the registry
         T-->>A: Results
     end
     A->>C: Scrub, then store<br/>the exchange
