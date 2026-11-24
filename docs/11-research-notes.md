@@ -18,7 +18,8 @@ Everything in the main case study describes what shipped, under a real latency b
 A from-scratch attempt at a genuinely different agentic control pattern than the one documented in [The Agent Itself](02-agent.md#the-agent-itself) — not a simpler version of the production agent, a structurally different one, built around explicit plan-execute-reflect-retry cycles rather than a flat reasoning-and-tool-calling loop. Prototyped as a design exploration — never completed, tuned or stress-tested, and nowhere near the rigour the shipped design went through.
 
 ```mermaid
-flowchart LR
+%%{init: {"flowchart": {"nodeSpacing": 18, "rankSpacing": 34, "wrappingWidth": 140}}}%%
+flowchart TB
     CL["Context loader"] --> PL["Planner · temp 0.1<br/>structured subtasks<br/>with dependencies"]
     PL -- "auth required" --> AH["Auth handler"]
     PL -- "plan" --> EX["Task executor<br/>dependency-aware dispatch"]
@@ -89,6 +90,7 @@ This research branch is a different, and in one specific respect **more literal*
 ### Three constructs, three different lifecycles
 
 ```mermaid
+%%{init: {"flowchart": {"nodeSpacing": 10, "rankSpacing": 30, "wrappingWidth": 110}}}%%
 flowchart TD
     T["Each turn"] --> WM["Working memory<br/>Redis list, Postgres fallback"]
     T --> EP{"Biography cached?"}

@@ -82,6 +82,7 @@ The shared worker layer provides:
 - **Pending store** — an event fired for a user who has never opened a conversation is held with a TTL and delivered the moment they first make contact
 
 ```mermaid
+%%{init: {"sequence": {"actorMargin": 12, "width": 96, "messageMargin": 28, "noteMargin": 6}}}%%
 sequenceDiagram
     autonumber
     participant BE as Backend or Stripe

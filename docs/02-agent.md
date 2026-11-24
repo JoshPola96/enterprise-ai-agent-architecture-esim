@@ -12,7 +12,7 @@
 A typed message from a verified user, in the order the system handles it.
 
 ```mermaid
-%%{init: {"sequence": {"actorMargin": 24, "width": 120, "noteMargin": 6, "messageMargin": 30}}}%%
+%%{init: {"sequence": {"actorMargin": 12, "width": 96, "messageMargin": 28, "noteMargin": 6}}}%%
 sequenceDiagram
     autonumber
     participant P as Platform

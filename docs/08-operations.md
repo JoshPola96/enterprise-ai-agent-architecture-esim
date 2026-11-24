@@ -10,6 +10,7 @@
 ## System Architecture
 
 ```mermaid
+%%{init: {"flowchart": {"nodeSpacing": 14, "rankSpacing": 30, "wrappingWidth": 120}}}%%
 flowchart TB
     subgraph CH["Channels"]
         TG["Telegram Bot API"]
@@ -68,6 +69,8 @@ flowchart TB
     PR --> GF
     LK --> GF
     DATA ~~~ OBS
+    DEL ~~~ SM
+    RAG ~~~ CM
 ```
 
 All services containerised on an internal bridge network. No container port is publicly exposed; all external traffic enters through Nginx exclusively.

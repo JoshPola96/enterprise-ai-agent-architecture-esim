@@ -66,6 +66,7 @@ Every layer below was designed against that test:
 ## 3. The Layer Map
 
 ```mermaid
+%%{init: {"flowchart": {"nodeSpacing": 18, "rankSpacing": 34, "wrappingWidth": 140}}}%%
 flowchart TB
     U["Inbound message<br/>Telegram / WhatsApp"] --> E
 
@@ -156,6 +157,7 @@ HSTS with preload in production, a `Permissions-Policy` disabling every unused b
 **Every user's first message passes through a Cloudflare Turnstile challenge** before anything reaches the agent. On Telegram, once the challenge is passed, the user is asked to share their contact card through a one-tap keyboard button — WhatsApp supplies the phone number with every message by construction, Telegram does not, and the number is what identity and authentication are built on.
 
 ```mermaid
+%%{init: {"sequence": {"actorMargin": 16, "width": 105, "messageMargin": 28}}}%%
 sequenceDiagram
     autonumber
     participant User
@@ -165,23 +167,23 @@ sequenceDiagram
     participant Agent
 
     User->>Bot: First message
-    Bot->>Bot: Hold message (type preserved: text, voice, image)
-    Bot-->>User: Localised verification link
-    Note over Bot,Page: Platform fetches the link to build a preview
-    Page-->>Bot: Crawler user-agent detected, static Open Graph card served
+    Bot->>Bot: Hold message<br/>(type preserved:<br/>text, voice, image)
+    Bot-->>User: Localised<br/>verification link
+    Note over Bot,Page: Platform fetches the link<br/>to build a preview
+    Page-->>Bot: Crawler user-agent detected,<br/>static Open Graph card served
     User->>Page: Opens link
-    Page->>CF: Challenge (interaction-only)
+    Page->>CF: Challenge<br/>(interaction-only)
     CF-->>Page: Token
-    Page->>Bot: Token + device fingerprint
+    Page->>Bot: Token + device<br/>fingerprint
     Bot->>CF: Verify token server-side
-    Bot->>Bot: Timing check — solved under 1.5s is flagged as automation
+    Bot->>Bot: Timing check — solved<br/>under 1.5s is flagged<br/>as automation
     alt Telegram
-        Bot-->>User: One-tap share-contact keyboard
+        Bot-->>User: One-tap share-<br/>contact keyboard
         User->>Bot: Contact card
-        Bot->>Bot: Accept only if card owner == sender
+        Bot->>Bot: Accept only if card<br/>owner == sender
     end
     Bot->>Agent: Replay the held message
-    Agent-->>User: Reply to what they originally asked
+    Agent-->>User: Reply to what they<br/>originally asked
 ```
 
 <p align="center">
@@ -433,7 +435,8 @@ Middleware catches what patterns can catch. The agent sees *meaning*. So the mod
 Some screening never reaches a flag. Disposable email domains and temporary numbers are declined quietly, with a plain request for a standard address. A fictional destination is answered without any tool being called. A request that is half public and half account-bound gets the public half answered and the login named for the rest.
 
 ```mermaid
-flowchart LR
+%%{init: {"flowchart": {"nodeSpacing": 18, "rankSpacing": 34, "wrappingWidth": 140}}}%%
+flowchart TB
     O["Agent observes<br/>suspicious behaviour"] --> T["flag_suspicious_user_tool"]
     T --> S{"Severity"}
     S -->|low| D1["small score delta"]
@@ -544,7 +547,8 @@ When enabled, a malicious probability above 0.65 is logged and above 0.90 contri
 A **Presidio** pipeline redacts sensitive data before anything reaches logs or long-term memory, initialised lazily per worker to avoid a boot-time memory spike.
 
 ```mermaid
-flowchart LR
+%%{init: {"flowchart": {"nodeSpacing": 18, "rankSpacing": 34, "wrappingWidth": 140}}}%%
+flowchart TB
     T["Text"] --> P1["Presidio built-ins<br/>email · card · IBAN · phone"]
     T --> P2["ONNX multilingual NER<br/>wikineural, INT8<br/>PER / LOC / ORG"]
     T --> P3["Domain regex recognizers<br/>ICCID · EID · OTP · IMEI<br/>customer ID · system tag"]
@@ -595,6 +599,7 @@ The recognizer confidences and the entity thresholds are one contract written in
 ### Dual-mode encryption
 
 ```mermaid
+%%{init: {"flowchart": {"nodeSpacing": 18, "rankSpacing": 34, "wrappingWidth": 140}}}%%
 flowchart TD
     K["ENCRYPTION_KEY<br/>one Fernet key"] --> FE["Fernet<br/>AES-128-CBC + HMAC-SHA256<br/>non-deterministic"]
     K --> DS["Domain-separated SHA-256 derivation<br/>versioned domain tag"]
@@ -629,7 +634,8 @@ Verification branches on the token's issuer. Tokens from the external auth API a
 ### The two-clock session
 
 ```mermaid
-flowchart LR
+%%{init: {"flowchart": {"nodeSpacing": 18, "rankSpacing": 34, "wrappingWidth": 140}}}%%
+flowchart TB
     M["Every message"] --> A["Inactivity horizon<br/>now + 90 days"]
     M --> B["Access token<br/>exp claim"]
     A --> MIN{"Earlier of the two"}

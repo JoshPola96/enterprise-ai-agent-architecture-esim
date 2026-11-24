@@ -16,6 +16,7 @@
 The hard part isn't the happy path — it's that the same human arrives first as an anonymous guest, on two platforms, sometimes from several devices, and the moment they log in, all of it has to collapse onto one account without ever creating a duplicate or losing history. Resolution happens by three keys tried in order — backend account ID, then email hash, then phone hash — and lands in one of three cases:
 
 ```mermaid
+%%{init: {"flowchart": {"nodeSpacing": 18, "rankSpacing": 34, "wrappingWidth": 140}}}%%
 flowchart TD
     L["Authenticated login"] --> Q{"Who already owns<br/>this backend ID?<br/>match by ID, email hash, phone hash"}
     Q -- "this same identity" --> A["Case A · update stored contact details"]
