@@ -15,7 +15,7 @@
 
 In this folder, `sha256sum -c --ignore-missing SHA256SUMS` checks every hashed file that is present: today, the audio and the verification page.
 
-**`SHA256SUMS` itself is timestamped.** [`SHA256SUMS.ots`](SHA256SUMS.ots) is an [OpenTimestamps](https://opentimestamps.org) proof made on 24 November 2026, anchored in the Bitcoin blockchain. It shows that this exact list, and through it every original's hash, existed by that date and has not changed since, without trusting me or this repository's history. To check it, drop both files on opentimestamps.org. It cannot show when the conversations took place; the platforms' own timestamps inside the exports, and every other participant's copy of the same chats, do that.
+**`SHA256SUMS` itself is timestamped.** [`SHA256SUMS.ots`](SHA256SUMS.ots) is an [OpenTimestamps](https://opentimestamps.org) proof made on 24 November 2026 and anchored in Bitcoin block 977,351, mined at 09:19 UTC that day. It shows that this exact list, and through it every original's hash, existed by that date and has not changed since, without trusting me or this repository's history. To check it, drop both files on opentimestamps.org. It cannot show when the conversations took place; the platforms' own timestamps inside the exports, and every other participant's copy of the same chats, do that.
 
 ## The redaction recipe
 
